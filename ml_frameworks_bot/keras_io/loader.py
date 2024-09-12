@@ -2,7 +2,7 @@ import os
 from typing import Any, List, Optional
 
 import weave
-from llama_index.core import SimpleDirectoryReader
+from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document
 from llama_index.core.base.embeddings.base import BaseEmbedding
@@ -68,14 +68,27 @@ class KerasIOLoader(weave.Model):
         buffer_size: int = 1,
         breakpoint_percentile_threshold: int = 95,
         num_workers: Optional[int] = None,
-    ) -> List[BaseNode]:
+        build_index_from_documents: bool = True,
+        vector_index_persist_dir: Optional[str] = None,
+    ) -> VectorStoreIndex:
         documents = self.load_documents(num_workers=num_workers)
         nodes = self.chunk_documents(
             documents,
             buffer_size=buffer_size,
             breakpoint_percentile_threshold=breakpoint_percentile_threshold,
         )
-        return nodes
+        self._vector_index = (
+            VectorStoreIndex.from_documents(
+                documents, show_progress=True, node_parser=nodes
+            )
+            if build_index_from_documents
+            else VectorStoreIndex(nodes=nodes)
+        )
+        if vector_index_persist_dir:
+            self._vector_index.storage_context.persist(
+                persist_dir=vector_index_persist_dir
+            )
+        return self._vector_index
 
     @weave.op()
     def load(
@@ -83,7 +96,7 @@ class KerasIOLoader(weave.Model):
         buffer_size: int = 1,
         breakpoint_percentile_threshold: int = 95,
         num_workers: Optional[int] = None,
-    ) -> List[BaseNode]:
+    ) -> VectorStoreIndex:
         return self.predict(
             buffer_size=buffer_size,
             breakpoint_percentile_threshold=breakpoint_percentile_threshold,
