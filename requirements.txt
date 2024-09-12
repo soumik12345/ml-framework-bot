@@ -1,0 +1,5 @@
+weave>=0.51.5
+openai>=1.44.1
+llama-index>=0.11.8
+llama-index-embeddings-huggingface>=0.3.1
+llama-index-embeddings-openai>=0.2.4
