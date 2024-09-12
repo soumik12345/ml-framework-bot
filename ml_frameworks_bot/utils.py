@@ -1,7 +1,8 @@
 import os
 from glob import glob
-from git import Repo
 from typing import List
+
+from git import Repo
 
 
 def fetch_git_repository(

@@ -3,10 +3,11 @@ from typing import Any, List, Optional
 
 import weave
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
+from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document
-from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
+
 from ..utils import fetch_git_repository, get_all_file_paths
 
 
