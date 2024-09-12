@@ -1,18 +1,18 @@
 import os
 from typing import Any, List, Optional
 
-import weave
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
+from pydantic import BaseModel
 
 from ..utils import fetch_git_repository, get_all_file_paths
 
 
-class KerasIOLoader(weave.Model):
+class KerasIOLoader(BaseModel):
     repository_local_path: str
     embedding_model_name: str
     repository: str = "https://github.com/keras-team/keras-io"
@@ -36,7 +36,6 @@ class KerasIOLoader(weave.Model):
             else HuggingFaceEmbedding(model_name=embedding_model_name)
         )
 
-    # @weave.op()
     def load_documents(self, num_workers: Optional[int] = None) -> List[Document]:
         repository_owner = self.repository.split("/")[-2]
         repository_name = self.repository.split("/")[-1]
@@ -62,7 +61,6 @@ class KerasIOLoader(weave.Model):
         reader = SimpleDirectoryReader(input_files=input_files)
         return reader.load_data(num_workers=num_workers, show_progress=True)
 
-    # @weave.op()
     def chunk_documents(
         self,
         documents: List[Document],
@@ -76,8 +74,7 @@ class KerasIOLoader(weave.Model):
         )
         return splitter.get_nodes_from_documents(documents, show_progress=True)
 
-    @weave.op()
-    def predict(
+    def load(
         self,
         buffer_size: int = 1,
         breakpoint_percentile_threshold: int = 95,
@@ -103,16 +100,3 @@ class KerasIOLoader(weave.Model):
                 persist_dir=vector_index_persist_dir
             )
         return self._vector_index
-
-    @weave.op()
-    def load(
-        self,
-        buffer_size: int = 1,
-        breakpoint_percentile_threshold: int = 95,
-        num_workers: Optional[int] = None,
-    ) -> VectorStoreIndex:
-        return self.predict(
-            buffer_size=buffer_size,
-            breakpoint_percentile_threshold=breakpoint_percentile_threshold,
-            num_workers=num_workers,
-        )
