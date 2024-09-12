@@ -26,9 +26,7 @@ class KerasIOLoader(weave.Model):
         self._embedding_model = OpenAIEmbedding(model=embedding_model_name)
 
     @weave.op()
-    def load_documents(
-        self, show_progress: bool = False, num_workers: Optional[int] = None
-    ) -> List[Document]:
+    def load_documents(self, num_workers: Optional[int] = None) -> List[Document]:
         repository_owner = self.repository.split("/")[-2]
         repository_name = self.repository.split("/")[-1]
         personal_access_token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
@@ -48,7 +46,7 @@ class KerasIOLoader(weave.Model):
             os.path.join(self.repository_local_path, "templates")
         )
         reader = SimpleDirectoryReader(input_files=input_files)
-        return reader.load_data(show_progress=show_progress, num_workers=num_workers)
+        return reader.load_data(num_workers=num_workers, show_progress=True)
 
     @weave.op()
     def chunk_documents(
@@ -63,3 +61,31 @@ class KerasIOLoader(weave.Model):
             embed_model=self._embedding_model,
         )
         return splitter.get_nodes_from_documents(documents)
+
+    @weave.op()
+    def predict(
+        self,
+        buffer_size: int = 1,
+        breakpoint_percentile_threshold: int = 95,
+        num_workers: Optional[int] = None,
+    ) -> List[BaseNode]:
+        documents = self.load_documents(num_workers=num_workers)
+        nodes = self.chunk_documents(
+            documents,
+            buffer_size=buffer_size,
+            breakpoint_percentile_threshold=breakpoint_percentile_threshold,
+        )
+        return nodes
+
+    @weave.op()
+    def load(
+        self,
+        buffer_size: int = 1,
+        breakpoint_percentile_threshold: int = 95,
+        num_workers: Optional[int] = None,
+    ) -> List[BaseNode]:
+        return self.predict(
+            buffer_size=buffer_size,
+            breakpoint_percentile_threshold=breakpoint_percentile_threshold,
+            num_workers=num_workers,
+        )
