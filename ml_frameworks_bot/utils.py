@@ -20,7 +20,9 @@ def fetch_git_repository(
     repository.remotes.origin.pull()
 
 
-def get_all_file_paths(directory: str) -> List[str]:
+def get_all_file_paths(
+    directory: str, included_file_extensions: List[str]
+) -> List[str]:
     file_paths = []
 
     def recurse_folder(folder):
@@ -28,7 +30,9 @@ def get_all_file_paths(directory: str) -> List[str]:
             if entry.is_dir():
                 recurse_folder(entry.path)
             else:
-                file_paths.append(entry.path)
+                for file_ext in included_file_extensions:
+                    if entry.path.endswith(file_ext):
+                        file_paths.append(entry.path)
 
     recurse_folder(directory)
 

@@ -6,6 +6,7 @@ from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
 
 from ..utils import fetch_git_repository, get_all_file_paths
@@ -24,9 +25,18 @@ class KerasIOLoader(weave.Model):
             embedding_model_name=embedding_model_name,
         )
         self.repository_local_path = repository_local_path
-        self._embedding_model = OpenAIEmbedding(model=embedding_model_name)
+        self._embedding_model = (
+            OpenAIEmbedding(model_name=embedding_model_name)
+            if embedding_model_name
+            in [
+                "text-embedding-3-small",
+                "text-embedding-3-large",
+                "text-embedding-ada-002",
+            ]
+            else HuggingFaceEmbedding(model_name=embedding_model_name)
+        )
 
-    @weave.op()
+    # @weave.op()
     def load_documents(self, num_workers: Optional[int] = None) -> List[Document]:
         repository_owner = self.repository.split("/")[-2]
         repository_name = self.repository.split("/")[-1]
@@ -38,18 +48,21 @@ class KerasIOLoader(weave.Model):
             personal_access_token,
         )
         input_files = get_all_file_paths(
-            os.path.join(self.repository_local_path, "examples")
+            os.path.join(self.repository_local_path, "examples"),
+            included_file_extensions=[".md"],
         )
         input_files += get_all_file_paths(
-            os.path.join(self.repository_local_path, "guides")
+            os.path.join(self.repository_local_path, "guides"),
+            included_file_extensions=[".md"],
         )
         input_files += get_all_file_paths(
-            os.path.join(self.repository_local_path, "templates")
+            os.path.join(self.repository_local_path, "templates"),
+            included_file_extensions=[".md"],
         )
         reader = SimpleDirectoryReader(input_files=input_files)
         return reader.load_data(num_workers=num_workers, show_progress=True)
 
-    @weave.op()
+    # @weave.op()
     def chunk_documents(
         self,
         documents: List[Document],
@@ -61,7 +74,7 @@ class KerasIOLoader(weave.Model):
             breakpoint_percentile_threshold=breakpoint_percentile_threshold,
             embed_model=self._embedding_model,
         )
-        return splitter.get_nodes_from_documents(documents)
+        return splitter.get_nodes_from_documents(documents, show_progress=True)
 
     @weave.op()
     def predict(
@@ -83,7 +96,7 @@ class KerasIOLoader(weave.Model):
                 documents, show_progress=True, node_parser=nodes
             )
             if build_index_from_documents
-            else VectorStoreIndex(nodes=nodes)
+            else VectorStoreIndex(nodes=nodes, show_progress=True)
         )
         if vector_index_persist_dir:
             self._vector_index.storage_context.persist(
