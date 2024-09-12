@@ -162,3 +162,5 @@ cython_debug/
 .idea/
 test.py
 keras_docs/
+wandb/
+vector_indices/

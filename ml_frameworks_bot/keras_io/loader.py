@@ -1,5 +1,5 @@
 import os
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.core.base.embeddings.base import BaseEmbedding
@@ -8,6 +8,8 @@ from llama_index.core.schema import BaseNode, Document
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
 from pydantic import BaseModel
+
+import wandb
 
 from ..utils import fetch_git_repository, get_all_file_paths
 
@@ -81,6 +83,8 @@ class KerasIOLoader(BaseModel):
         num_workers: Optional[int] = None,
         build_index_from_documents: bool = True,
         vector_index_persist_dir: Optional[str] = None,
+        artifact_name: Optional[str] = None,
+        artifact_metadata: Optional[Dict[str, Any]] = None,
     ) -> VectorStoreIndex:
         documents = self.load_documents(num_workers=num_workers)
         nodes = self.chunk_documents(
@@ -99,4 +103,10 @@ class KerasIOLoader(BaseModel):
             self._vector_index.storage_context.persist(
                 persist_dir=vector_index_persist_dir
             )
+            if wandb.run and artifact_name:
+                artifact = wandb.Artifact(
+                    name=artifact_name, type="vector_index", metadata=artifact_metadata
+                )
+                artifact.add_dir(local_path=vector_index_persist_dir)
+                artifact.save()
         return self._vector_index
