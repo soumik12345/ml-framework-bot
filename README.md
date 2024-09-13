@@ -1,5 +1,7 @@
 # ML Framework Bot
 
+An agentic bot to translate machine learning codebases across ML frameworks.
+
 ## Build Vector Index for [keras.io](https://keras.io/)
 
 ```python
