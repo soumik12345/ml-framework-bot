@@ -2,8 +2,9 @@
 
 An agentic workflow to translate machine learning codebases across ML frameworks reliably at scale.
 
-## Build Vector Index for [keras.io](https://keras.io/)
-
+<details>
+<summary>Build Vector Index for <a href="https://keras.io/">keras.io</a></summary>
+  
 ```python
 from dotenv import load_dotenv
 
@@ -22,9 +23,11 @@ vector_index = retriever.index_documents(
     artifact_name="keras_docs_vector_index",
 )
 ```
+</details>
 
-## Load [keras.io](https://keras.io/) Retreiver from Vector Index
-
+<details>
+<summary>Load <a href="https://keras.io/">keras.io</a> Retreiver from Vector Index</summary>
+  
 ```python
 import weave
 from dotenv import load_dotenv
@@ -55,3 +58,4 @@ model.summary()
 """
 )
 ```
+</details>
