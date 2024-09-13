@@ -5,7 +5,7 @@ import weave
 from instructor import Instructor
 from litellm import completion
 
-from ..schema import CodeSnippets
+from ..schema import KerasOperations
 from ..utils import weave_op_wrapper
 from .retriever import KerasIORetreiver
 
@@ -35,13 +35,13 @@ class KerasDocumentationAgent(weave.Model):
     @weave.op()
     def extract_keras_operations(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
-    ) -> CodeSnippets:
-        keras_operations: CodeSnippets = weave_op_wrapper(
+    ) -> KerasOperations:
+        keras_operations: KerasOperations = weave_op_wrapper(
             name="Instructor.chat.completions.create"
         )(self._llm_client.chat.completions.create)(
             model=self.llm_name,
             max_retries=max_retries,
-            response_model=CodeSnippets,
+            response_model=KerasOperations,
             seed=seed,
             messages=[
                 {
@@ -66,13 +66,15 @@ Here are some rules:
                 },
             ],
         )
-        unique_keras_ops = CodeSnippets(snippets=list(set(keras_operations.snippets)))
+        unique_keras_ops = KerasOperations(
+            snippets=list(set(keras_operations.operations))
+        )
         return unique_keras_ops
 
     @weave.op()
     def predict(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
-    ) -> CodeSnippets:
+    ) -> KerasOperations:
         return self.extract_code_snippets(
             code_snippet=code_snippet, seed=seed, max_retries=max_retries
         )
