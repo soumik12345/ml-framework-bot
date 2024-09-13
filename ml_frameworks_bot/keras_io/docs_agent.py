@@ -33,12 +33,12 @@ class KerasDocumentationAgent(weave.Model):
         self._llm_client = instructor.from_litellm(completion)
 
     @weave.op()
-    def extract_code_snippets(
+    def extract_keras_operations(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
     ) -> CodeSnippets:
-        return weave_op_wrapper(name="Instructor.chat.completions.create")(
-            self._llm_client.chat.completions.create
-        )(
+        keras_operations: CodeSnippets = weave_op_wrapper(
+            name="Instructor.chat.completions.create"
+        )(self._llm_client.chat.completions.create)(
             model=self.llm_name,
             max_retries=max_retries,
             response_model=CodeSnippets,
@@ -48,8 +48,8 @@ class KerasDocumentationAgent(weave.Model):
                     "role": "system",
                     "content": """
 You are an experienced machine learning engineer expert in python and Keras.
-You are suppossed to think step-by-step about all the Keras operations, layers,
-and functions from a given snippet of code.
+You are suppossed to think step-by-step about all the unique Keras operations,
+layers, and functions from a given snippet of code.
 
 Here are some rules:
 1. All functions and classes that are imported from `keras` should be considered to
@@ -57,6 +57,7 @@ Here are some rules:
 2. `impport` statements don't count as separate statements.
 3. If there are nested Keras operations, you should extract all the operations that
     are present inside the parent operation.
+4. You should simply return the names of the ops and not the entire statement itself.
 """,
                 },
                 {
@@ -65,6 +66,8 @@ Here are some rules:
                 },
             ],
         )
+        unique_keras_ops = CodeSnippets(snippets=list(set(keras_operations.snippets)))
+        return unique_keras_ops
 
     @weave.op()
     def predict(
