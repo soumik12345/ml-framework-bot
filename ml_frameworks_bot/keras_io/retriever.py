@@ -23,6 +23,7 @@ class KerasIORetreiver(weave.Model):
     repository_local_path: Optional[str]
     similarity_top_k: int
     repository: str = "https://github.com/keras-team/keras-io"
+    wandb_artifact_address: Optional[str] = None
     _vector_index: VectorStoreIndex = None
     _retreival_engine: BaseRetriever = None
 
@@ -56,11 +57,13 @@ class KerasIORetreiver(weave.Model):
         vector_index = load_index_from_storage(
             storage_context=StorageContext.from_defaults(persist_dir=artifact_dir)
         )
-        return cls(
+        _cls = cls(
             embedding_model_name=embedding_model_name,
             similarity_top_k=similarity_top_k,
             vector_index=vector_index,
         )
+        _cls.wandb_artifact_address = artifact_address
+        return _cls
 
     def load_documents(
         self,
