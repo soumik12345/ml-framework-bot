@@ -1,6 +1,6 @@
 # ML Framework Bot
 
-An agentic bot to translate machine learning codebases across ML frameworks.
+An agentic workflow to translate machine learning codebases across ML frameworks reliably at scale.
 
 ## Build Vector Index for [keras.io](https://keras.io/)
 
