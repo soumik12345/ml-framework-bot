@@ -5,6 +5,7 @@ import weave
 from instructor import Instructor
 from litellm import completion
 from llama_index.core.schema import BaseNode
+from pydantic import BaseModel
 from rich.progress import track
 
 from ..schema import KerasOperations
@@ -12,25 +13,19 @@ from ..utils import weave_op_wrapper
 from .retriever import KerasIORetreiver
 
 
+class KerasOpWithAPIReference(BaseModel):
+    keras_op: str
+    api_reference: str
+
+
 class KerasDocumentationAgent(weave.Model):
     llm_name: str
-    template_retriever: KerasIORetreiver
-    guides_retriever: KerasIORetreiver
-    example_retriever: KerasIORetreiver
+    api_reference_retriever: KerasIORetreiver
     _llm_client: Instructor
 
-    def __init__(
-        self,
-        llm_name: str,
-        template_retriever: KerasIORetreiver,
-        guides_retriever: KerasIORetreiver,
-        example_retriever: KerasIORetreiver,
-    ):
+    def __init__(self, llm_name: str, api_reference_retriever: KerasIORetreiver):
         super().__init__(
-            llm_name=llm_name,
-            template_retriever=template_retriever,
-            guides_retriever=guides_retriever,
-            example_retriever=example_retriever,
+            llm_name=llm_name, api_reference_retriever=api_reference_retriever
         )
         self._llm_client = instructor.from_litellm(completion)
 
@@ -60,6 +55,7 @@ Here are some rules:
 3. If there are nested Keras operations, you should extract all the operations that
     are present inside the parent operation.
 4. You should simply return the names of the ops and not the entire statement itself.
+5. Ensure that the names of the ops consist of the entire `keras` namespace.
 """,
                 },
                 {
@@ -74,13 +70,20 @@ Here are some rules:
         return unique_keras_ops
 
     @weave.op()
-    def retrieve_documentation(self, keras_ops: KerasOperations) -> List[BaseNode]:
-        return [
-            self.template_retriever.predict(query=keras_op)[0]
-            for keras_op in track(
-                keras_ops.operations, description="Retrieving api references:"
+    def retrieve_api_references(self, keras_ops: KerasOperations) -> List[BaseNode]:
+        ops_with_api_reference = []
+        for keras_op in track(
+            keras_ops.operations, description="Retrieving api references:"
+        ):
+            api_reference: BaseNode = self.api_reference_retriever.predict(
+                query=f"API reference for `{keras_op}`"
+            )[0]
+            ops_with_api_reference.append(
+                KerasOpWithAPIReference(
+                    keras_op=keras_op, api_reference=api_reference.text
+                )
             )
-        ]
+        return ops_with_api_reference
 
     @weave.op()
     def predict(
@@ -89,4 +92,4 @@ Here are some rules:
         keras_ops = self.extract_keras_operations(
             code_snippet=code_snippet, seed=seed, max_retries=max_retries
         )
-        return self.retrieve_documentation(keras_ops=keras_ops)
+        return self.retrieve_api_references(keras_ops=keras_ops)
