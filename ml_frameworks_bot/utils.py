@@ -1,7 +1,8 @@
 import os
 from glob import glob
-from typing import List
+from typing import Callable, List
 
+import weave
 from git import Repo
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -53,3 +54,12 @@ def make_embedding_model(embedding_model_name: str) -> BaseEmbedding:
         ]
         else HuggingFaceEmbedding(model_name=embedding_model_name)
     )
+
+
+def weave_op_wrapper(name: str) -> Callable[[Callable], Callable]:
+    def wrapper(fn: Callable) -> Callable:
+        op = weave.op()(fn)
+        op.name = name
+        return op
+
+    return wrapper
