@@ -28,3 +28,7 @@ class APIReference(BaseModel):
     return_type: Optional[str] = None
     raises: Optional[Error] = None
     example_usage: Optional[List[str]] = None
+
+
+class CodeSnippets(BaseModel):
+    snippets: List[str]
