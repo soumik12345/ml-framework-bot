@@ -1,3 +1,3 @@
-from .loader import KerasIOLoader
+from .retriever import KerasIORetreiver
 
-__all__ = ["KerasIOLoader"]
+__all__ = ["KerasIORetreiver"]

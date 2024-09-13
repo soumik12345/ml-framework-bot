@@ -3,6 +3,9 @@ from glob import glob
 from typing import List
 
 from git import Repo
+from llama_index.core.base.embeddings.base import BaseEmbedding
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.embeddings.openai import OpenAIEmbedding
 
 
 def fetch_git_repository(
@@ -37,3 +40,16 @@ def get_all_file_paths(
     recurse_folder(directory)
 
     return file_paths
+
+
+def make_embedding_model(embedding_model_name: str) -> BaseEmbedding:
+    return (
+        OpenAIEmbedding(model_name=embedding_model_name)
+        if embedding_model_name
+        in [
+            "text-embedding-3-small",
+            "text-embedding-3-large",
+            "text-embedding-ada-002",
+        ]
+        else HuggingFaceEmbedding(model_name=embedding_model_name)
+    )
