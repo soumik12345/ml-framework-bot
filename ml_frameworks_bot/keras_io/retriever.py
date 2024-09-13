@@ -102,6 +102,7 @@ class KerasIORetreiver(weave.Model):
         self,
         buffer_size: int = 1,
         breakpoint_percentile_threshold: int = 95,
+        included_directories: List[str] = ["examples", "guides", "templates"],
         num_workers: Optional[int] = None,
         build_index_from_documents: bool = True,
         vector_index_persist_dir: Optional[str] = None,
@@ -109,7 +110,9 @@ class KerasIORetreiver(weave.Model):
         artifact_metadata: Optional[Dict[str, Any]] = {},
     ) -> VectorStoreIndex:
         if self.repository_local_path is not None:
-            documents = self.load_documents(num_workers=num_workers)
+            documents = self.load_documents(
+                included_directories=included_directories, num_workers=num_workers
+            )
             nodes = self.chunk_documents(
                 documents,
                 buffer_size=buffer_size,
