@@ -164,3 +164,4 @@ test.py
 keras_docs/
 wandb/
 vector_indices/
+artifacts/
