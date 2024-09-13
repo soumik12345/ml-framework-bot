@@ -1,0 +1,16 @@
+name: Code Checks
+on:
+  pull_request:
+    paths:
+      - .github/workflows/tests.yml
+      - ml_frameworks_bot/**
+      - requirements.txt
+      - setup.py
+
+jobs:
+  lint:
+    name: check code format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: psf/black@stable
