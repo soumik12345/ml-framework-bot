@@ -62,7 +62,11 @@ class KerasIORetreiver(weave.Model):
             vector_index=vector_index,
         )
 
-    def load_documents(self, num_workers: Optional[int] = None) -> List[Document]:
+    def load_documents(
+        self,
+        included_directories: List[str] = ["examples", "guides", "templates"],
+        num_workers: Optional[int] = None,
+    ) -> List[Document]:
         repository_owner = self.repository.split("/")[-2]
         repository_name = self.repository.split("/")[-1]
         personal_access_token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
@@ -72,18 +76,12 @@ class KerasIORetreiver(weave.Model):
             repository_name,
             personal_access_token,
         )
-        input_files = get_all_file_paths(
-            os.path.join(self.repository_local_path, "examples"),
-            included_file_extensions=[".md"],
-        )
-        input_files += get_all_file_paths(
-            os.path.join(self.repository_local_path, "guides"),
-            included_file_extensions=[".md"],
-        )
-        input_files += get_all_file_paths(
-            os.path.join(self.repository_local_path, "templates"),
-            included_file_extensions=[".md"],
-        )
+        input_files = []
+        for directory in included_directories:
+            input_files += get_all_file_paths(
+                os.path.join(self.repository_local_path, directory),
+                included_file_extensions=[".md"],
+            )
         reader = SimpleDirectoryReader(input_files=input_files)
         return reader.load_data(num_workers=num_workers, show_progress=True)
 
