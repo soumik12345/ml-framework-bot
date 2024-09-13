@@ -1,9 +1,11 @@
-from typing import Optional
+from typing import List, Optional
 
 import instructor
 import weave
 from instructor import Instructor
 from litellm import completion
+from llama_index.core.schema import BaseNode
+from rich.progress import track
 
 from ..schema import KerasOperations
 from ..utils import weave_op_wrapper
@@ -67,14 +69,24 @@ Here are some rules:
             ],
         )
         unique_keras_ops = KerasOperations(
-            snippets=list(set(keras_operations.operations))
+            operations=list(set(keras_operations.operations))
         )
         return unique_keras_ops
 
     @weave.op()
+    def retrieve_documentation(self, keras_ops: KerasOperations) -> List[BaseNode]:
+        return [
+            self.template_retriever.predict(query=keras_op)[0]
+            for keras_op in track(
+                keras_ops.operations, description="Retrieving api references:"
+            )
+        ]
+
+    @weave.op()
     def predict(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
-    ) -> KerasOperations:
-        return self.extract_code_snippets(
+    ) -> List[BaseNode]:
+        keras_ops = self.extract_keras_operations(
             code_snippet=code_snippet, seed=seed, max_retries=max_retries
         )
+        return self.retrieve_documentation(keras_ops=keras_ops)

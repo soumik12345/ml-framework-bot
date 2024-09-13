@@ -30,5 +30,9 @@ class APIReference(BaseModel):
     example_usage: Optional[List[str]] = None
 
 
-class CodeSnippets(BaseModel):
-    snippets: List[str]
+class APIReferences(BaseModel):
+    api_references: List[APIReference]
+
+
+class KerasOperations(BaseModel):
+    operations: List[str]
