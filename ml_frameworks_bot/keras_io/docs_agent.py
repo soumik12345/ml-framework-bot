@@ -8,9 +8,9 @@ from llama_index.core.schema import BaseNode
 from pydantic import BaseModel
 from rich.progress import track
 
-from ..schema import KerasOperations
-from ..utils import weave_op_wrapper
-from .retriever import KerasIORetreiver
+from ml_frameworks_bot.schema import KerasOperations
+from ml_frameworks_bot.utils import weave_op_wrapper
+from ml_frameworks_bot.keras_io.retriever import KerasIORetreiver
 
 
 class KerasOpWithAPIReference(BaseModel):

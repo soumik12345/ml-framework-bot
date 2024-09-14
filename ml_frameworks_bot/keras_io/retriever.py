@@ -16,7 +16,7 @@ from rich.progress import track
 
 import wandb
 
-from ..utils import (
+from ml_frameworks_bot.utils import (
     build_keras_io_sources,
     fetch_git_repository,
     get_all_file_paths,
