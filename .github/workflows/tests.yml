@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/tests.yml
-      - ml_frameworks_bot/**
+      - "**.py"
       - pyproject.toml
 
 jobs:
@@ -29,3 +29,7 @@ jobs:
       - name: Ruff
         run: |
           uv run ruff check
+
+      - name: Test
+        run: |
+          uv run pytest

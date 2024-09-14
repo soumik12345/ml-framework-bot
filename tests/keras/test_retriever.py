@@ -1,7 +1,4 @@
-from dotenv import load_dotenv
 from ml_frameworks_bot.keras_io import KerasIORetreiver
-
-load_dotenv()
 
 
 def test_retriever():
