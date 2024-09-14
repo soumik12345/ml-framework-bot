@@ -51,7 +51,7 @@ layers, and functions from a given snippet of code.
 Here are some rules:
 1. All functions and classes that are imported from `keras` should be considered to
     be Keras operations.
-2. `impport` statements don't count as separate statements.
+2. `import` statements don't count as separate statements.
 3. If there are nested Keras operations, you should extract all the operations that
     are present inside the parent operation.
 4. You should simply return the names of the ops and not the entire statement itself.
