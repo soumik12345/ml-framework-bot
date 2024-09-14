@@ -4,18 +4,23 @@ from typing import Any, Dict, List, Optional
 import weave
 from llama_index.core import (
     Settings,
-    SimpleDirectoryReader,
     StorageContext,
     VectorStoreIndex,
     load_index_from_storage,
 )
 from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.node_parser import SemanticSplitterNodeParser
-from llama_index.core.schema import BaseNode, Document, NodeWithScore
+from llama_index.core.schema import BaseNode, Document, NodeWithScore, TextNode
+from rich.progress import track
 
 import wandb
 
-from ..utils import fetch_git_repository, get_all_file_paths, make_embedding_model, build_keras_io_sources
+from ..utils import (
+    build_keras_io_sources,
+    fetch_git_repository,
+    get_all_file_paths,
+    make_embedding_model,
+)
 
 
 class KerasIORetreiver(weave.Model):
@@ -68,8 +73,8 @@ class KerasIORetreiver(weave.Model):
     def load_documents(
         self,
         included_directories: List[str] = ["examples", "guides", "templates"],
-        num_workers: Optional[int] = None,
-    ) -> List[Document]:
+        exclude_file_postfixes: List[str] = ["index.md"],
+    ) -> List[BaseNode]:
         repository_owner = self.repository.split("/")[-2]
         repository_name = self.repository.split("/")[-1]
         personal_access_token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
@@ -88,8 +93,22 @@ class KerasIORetreiver(weave.Model):
                 os.path.join(self.repository_local_path, directory),
                 included_file_extensions=[".md"],
             )
-        reader = SimpleDirectoryReader(input_files=input_files)
-        return reader.load_data(num_workers=num_workers, show_progress=True)
+        document_nodes = []
+        for file_path in track(input_files, description="Loading documents:"):
+            exclude_file = False
+            for exclusion in exclude_file_postfixes:
+                if file_path.endswith(exclusion):
+                    exclude_file = True
+                    break
+            if not exclude_file:
+                with open(file_path, "r") as file:
+                    text = file.read()
+                # documents.append(Document(text=text, metadata={"file_path": file_path}))
+                # document_nodes.append(BaseNode(text=text, metadata={"file_path": file_path}))
+                document_nodes.append(
+                    TextNode(text=text, metadata={"file_path": file_path})
+                )
+        return document_nodes
 
     def chunk_documents(
         self,
@@ -110,19 +129,15 @@ class KerasIORetreiver(weave.Model):
 
     def index_documents(
         self,
+        included_directories: List[str] = ["examples", "guides", "templates"],
+        exclude_file_postfixes: List[str] = ["index.md"],
         buffer_size: int = 1,
         breakpoint_percentile_threshold: int = 95,
-        chunk_size: int = 1024,
-        chunk_overlap: int = 20,
-        included_directories: List[str] = ["examples", "guides", "templates"],
-        num_workers: Optional[int] = None,
-        build_index_from_documents: bool = True,
         vector_index_persist_dir: Optional[str] = None,
         artifact_name: Optional[str] = None,
         artifact_metadata: Optional[Dict[str, Any]] = {},
         artifact_aliases: Optional[List[str]] = [],
         track_load_documents: bool = False,
-        track_chunk_documents: bool = False,
     ) -> VectorStoreIndex:
         if self.repository_local_path is not None:
             load_document_fn = (
@@ -130,28 +145,14 @@ class KerasIORetreiver(weave.Model):
                 if track_load_documents
                 else self.load_documents
             )
-            documents = load_document_fn(
-                included_directories=included_directories, num_workers=num_workers
-            )
-            chunk_document_function = (
-                weave.op()(self.chunk_documents)
-                if track_chunk_documents
-                else self.chunk_documents
-            )
-            nodes = chunk_document_function(
-                documents,
-                buffer_size=buffer_size,
-                breakpoint_percentile_threshold=breakpoint_percentile_threshold,
-                chunk_size=chunk_size,
-                chunk_overlap=chunk_overlap,
-            )
-            self._vector_index = (
-                VectorStoreIndex.from_documents(
-                    documents, show_progress=True, node_parser=nodes
-                )
-                if build_index_from_documents
-                else VectorStoreIndex(nodes=nodes, show_progress=True)
-            )
+            document_nodes = load_document_fn(included_directories=included_directories)
+            # self._vector_index = VectorStoreIndex.from_documents(
+            #     documents, show_progress=True
+            # )
+            self._vector_index = VectorStoreIndex(nodes=document_nodes)
+            print(f"{len(document_nodes)=}")
+            print(f"{len(self._vector_index.docstore.docs)=}")
+            assert len(document_nodes) == len(self._vector_index.docstore.docs)
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(
                     persist_dir=vector_index_persist_dir
@@ -161,12 +162,9 @@ class KerasIORetreiver(weave.Model):
                         **artifact_metadata,
                         **{
                             "embedding_model_name": self.embedding_model_name,
-                            "chunk_size": chunk_size,
-                            "chunk_overlap": chunk_overlap,
                             "buffer_size": buffer_size,
                             "breakpoint_percentile_threshold": breakpoint_percentile_threshold,
                             "included_directories": included_directories,
-                            "build_index_from_documents": build_index_from_documents,
                         },
                     }
                     artifact_aliases.append("latest")
