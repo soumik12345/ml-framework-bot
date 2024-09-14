@@ -6,25 +6,26 @@ An agentic workflow to translate machine learning codebases across ML frameworks
 <summary>Build Vector Index for <a href="https://keras.io/">keras.io</a></summary>
   
 ```python
-import wandb
+import torch
 from dotenv import load_dotenv
 
+import wandb
 from ml_frameworks_bot.keras_io import KerasIORetreiver
 
 load_dotenv()
-# weave.init(project_name="ml-colabs/ml-frameworks-bot")
 wandb.init(
     project="ml-frameworks-bot", entity="ml-colabs", job_type="build_vector_index"
 )
 retriever = KerasIORetreiver(
-    embedding_model_name="BAAI/bge-small-en-v1.5", repository_local_path="keras_docs"
+    embedding_model_name="BAAI/bge-small-en-v1.5",
+    torch_dtype=torch.float16,
+    repository_local_path="keras_docs",
 )
 vector_index = retriever.index_documents(
     included_directories=["sources/api"],
     vector_index_persist_dir="vector_indices/keras3_api_reference",
     artifact_name="keras3_api_reference",
 )
-
 ```
 </details>
 
@@ -40,12 +41,11 @@ from ml_frameworks_bot.keras_io import KerasIORetreiver
 load_dotenv()
 weave.init(project_name="ml-colabs/ml-frameworks-bot")
 retriever = KerasIORetreiver.from_wandb_artifact(
-    artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:v3"
+    artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
 )
 retrieved_nodes = retriever.predict(
     query="Fetch the API referece for `keras.layers.Dense`"
 )
-
 ```
 </details>
 
