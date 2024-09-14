@@ -1,4 +1,5 @@
 import os
+import subprocess
 from glob import glob
 from typing import Callable, List
 
@@ -68,3 +69,13 @@ def weave_op_wrapper(name: str) -> Callable[[Callable], Callable]:
         return op
 
     return wrapper
+
+
+def build_keras_io_sources(repository_local_path: str):
+    working_directory = os.getcwd()
+    os.chdir(repository_local_path)
+    subprocess.run(["pip", "install", "-r", "requirements.txt"])
+    subprocess.run(["pip", "install", "keras-nlp==0.14.4"])
+    os.chdir("scripts")
+    subprocess.run(["python", "autogen.py", "make"])
+    os.chdir(working_directory)
