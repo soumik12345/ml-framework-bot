@@ -76,7 +76,7 @@ Here are some rules:
             keras_ops.operations, description="Retrieving api references:"
         ):
             api_reference: BaseNode = self.api_reference_retriever.predict(
-                query=f"API reference for `{keras_op}`"
+                query=f"Fetch the API referece for `{keras_op}`"
             )[0]
             ops_with_api_reference.append(
                 KerasOpWithAPIReference(

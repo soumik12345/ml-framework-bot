@@ -10,13 +10,13 @@ import torch
 from dotenv import load_dotenv
 
 import wandb
-from ml_frameworks_bot.keras_io import KerasIORetreiver
+from ml_frameworks_bot.keras import KerasDocumentationRetreiver
 
 load_dotenv()
 wandb.init(
     project="ml-frameworks-bot", entity="ml-colabs", job_type="build_vector_index"
 )
-retriever = KerasIORetreiver(
+retriever = KerasDocumentationRetreiver(
     embedding_model_name="BAAI/bge-small-en-v1.5",
     torch_dtype=torch.float16,
     repository_local_path="keras_docs",
@@ -36,11 +36,11 @@ vector_index = retriever.index_documents(
 import weave
 from dotenv import load_dotenv
 
-from ml_frameworks_bot.keras_io import KerasIORetreiver
+from ml_frameworks_bot.keras import KerasDocumentationRetreiver
 
 load_dotenv()
 weave.init(project_name="ml-colabs/ml-frameworks-bot")
-retriever = KerasIORetreiver.from_wandb_artifact(
+retriever = KerasDocumentationRetreiver.from_wandb_artifact(
     artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
 )
 retrieved_nodes = retriever.predict(
@@ -56,26 +56,17 @@ retrieved_nodes = retriever.predict(
 import weave
 from dotenv import load_dotenv
 
-from ml_frameworks_bot.keras_io import KerasDocumentationAgent, KerasIORetreiver
+from ml_frameworks_bot.keras import KerasDocumentationRetreiver, KerasDocumentationAgent
 
 load_dotenv()
-weave.init(project_name="geekyrakshit/ml-frameworks-bot")
-template_retriever = KerasIORetreiver.from_wandb_artifact(
-    artifact_address="geekyrakshit/ml-frameworks-bot/keras_io_vector_index_templates:latest"
+weave.init(project_name="ml-colabs/ml-frameworks-bot")
+api_reference_retriever = KerasDocumentationRetreiver.from_wandb_artifact(
+    artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
 )
-guides_retriever = KerasIORetreiver.from_wandb_artifact(
-    artifact_address="geekyrakshit/ml-frameworks-bot/keras_io_vector_index_templates:latest"
+keras_docs_agent = KerasDocumentationAgent(
+    llm_name="gpt-4o", api_reference_retriever=api_reference_retriever
 )
-example_retriever = KerasIORetreiver.from_wandb_artifact(
-    artifact_address="geekyrakshit/ml-frameworks-bot/keras_io_vector_index_examples:latest"
-)
-agent = KerasDocumentationAgent(
-    llm_name="gpt-4o",
-    template_retriever=template_retriever,
-    guides_retriever=guides_retriever,
-    example_retriever=example_retriever,
-)
-response = agent.predict(
+reponse = keras_docs_agent.predict(
     code_snippet="""
 import keras
 from keras import layers
@@ -94,8 +85,7 @@ model = keras.Sequential(
 )
 
 model.summary()
-""",
-    seed=42,
+"""
 )
 ```
 </details>
