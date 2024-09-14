@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import weave
 from llama_index.core import (
@@ -74,7 +74,8 @@ class KerasIORetreiver(weave.Model):
         self,
         included_directories: List[str] = ["examples", "guides", "templates"],
         exclude_file_postfixes: List[str] = ["index.md"],
-    ) -> List[BaseNode]:
+        return_nodes: bool = True,
+    ) -> List[Union[BaseNode, Document]]:
         repository_owner = self.repository.split("/")[-2]
         repository_name = self.repository.split("/")[-1]
         personal_access_token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
@@ -103,10 +104,10 @@ class KerasIORetreiver(weave.Model):
             if not exclude_file:
                 with open(file_path, "r") as file:
                     text = file.read()
-                # documents.append(Document(text=text, metadata={"file_path": file_path}))
-                # document_nodes.append(BaseNode(text=text, metadata={"file_path": file_path}))
                 document_nodes.append(
                     TextNode(text=text, metadata={"file_path": file_path})
+                    if return_nodes
+                    else Document(text=text, metadata={"file_path": file_path})
                 )
         return document_nodes
 
@@ -131,6 +132,9 @@ class KerasIORetreiver(weave.Model):
         self,
         included_directories: List[str] = ["examples", "guides", "templates"],
         exclude_file_postfixes: List[str] = ["index.md"],
+        apply_chunking: bool = False,
+        chunk_size: int = 1024,
+        chunk_overlap: int = 20,
         buffer_size: int = 1,
         breakpoint_percentile_threshold: int = 95,
         vector_index_persist_dir: Optional[str] = None,
@@ -138,6 +142,7 @@ class KerasIORetreiver(weave.Model):
         artifact_metadata: Optional[Dict[str, Any]] = {},
         artifact_aliases: Optional[List[str]] = [],
         track_load_documents: bool = False,
+        track_chunk_documents: bool = False,
     ) -> VectorStoreIndex:
         if self.repository_local_path is not None:
             load_document_fn = (
@@ -145,10 +150,27 @@ class KerasIORetreiver(weave.Model):
                 if track_load_documents
                 else self.load_documents
             )
-            document_nodes = load_document_fn(included_directories=included_directories)
-            # self._vector_index = VectorStoreIndex.from_documents(
-            #     documents, show_progress=True
-            # )
+            document_nodes = load_document_fn(
+                included_directories=included_directories,
+                exclude_file_postfixes=exclude_file_postfixes,
+                return_nodes=not apply_chunking,
+            )
+            chunk_document_fn = (
+                weave.op()(self.chunk_documents)
+                if track_chunk_documents
+                else self.chunk_documents
+            )
+            document_nodes = (
+                chunk_document_fn(
+                    documents=document_nodes,
+                    buffer_size=buffer_size,
+                    breakpoint_percentile_threshold=breakpoint_percentile_threshold,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
+                )
+                if apply_chunking
+                else document_nodes
+            )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
             print(f"{len(document_nodes)=}")
             print(f"{len(self._vector_index.docstore.docs)=}")
@@ -162,6 +184,9 @@ class KerasIORetreiver(weave.Model):
                         **artifact_metadata,
                         **{
                             "embedding_model_name": self.embedding_model_name,
+                            "apply_chunking": apply_chunking,
+                            "chunk_size": chunk_size,
+                            "chunk_overlap": chunk_overlap,
                             "buffer_size": buffer_size,
                             "breakpoint_percentile_threshold": breakpoint_percentile_threshold,
                             "included_directories": included_directories,
