@@ -2,6 +2,12 @@
 
 An agentic workflow to translate machine learning codebases across ML frameworks reliably at scale.
 
+## Installation
+
+```bash
+uv sync
+```
+
 <details>
 <summary>Build Vector Index for <a href="https://keras.io/">keras.io</a></summary>
   
