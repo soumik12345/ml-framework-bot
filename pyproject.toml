@@ -21,6 +21,7 @@ dev = ["pytest>=8.3.3"]
 [tool.pytest.ini_options]
 pythonpath = "."
 testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.uv]
 dev-dependencies = [
