@@ -172,9 +172,7 @@ class KerasIORetreiver(weave.Model):
                 else document_nodes
             )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
-            print(f"{len(document_nodes)=}")
-            print(f"{len(self._vector_index.docstore.docs)=}")
-            assert len(document_nodes) == len(self._vector_index.docstore.docs)
+            assert len(document_nodes) == len(self._vector_index.docstore.docs), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(
                     persist_dir=vector_index_persist_dir
