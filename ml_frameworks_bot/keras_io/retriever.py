@@ -93,7 +93,11 @@ class KerasIORetreiver(weave.Model):
         documents: List[Document],
         buffer_size: int = 1,
         breakpoint_percentile_threshold: int = 95,
+        chunk_size: int = 1024,
+        chunk_overlap: int = 20,
     ) -> List[BaseNode]:
+        Settings.chunk_size = chunk_size
+        Settings.chunk_overlap = chunk_overlap
         splitter = SemanticSplitterNodeParser(
             buffer_size=buffer_size,
             breakpoint_percentile_threshold=breakpoint_percentile_threshold,
@@ -105,21 +109,38 @@ class KerasIORetreiver(weave.Model):
         self,
         buffer_size: int = 1,
         breakpoint_percentile_threshold: int = 95,
+        chunk_size: int = 1024,
+        chunk_overlap: int = 20,
         included_directories: List[str] = ["examples", "guides", "templates"],
         num_workers: Optional[int] = None,
         build_index_from_documents: bool = True,
         vector_index_persist_dir: Optional[str] = None,
         artifact_name: Optional[str] = None,
         artifact_metadata: Optional[Dict[str, Any]] = {},
+        artifact_aliases: Optional[List[str]] = [],
+        track_load_documents: bool = False,
+        track_chunk_documents: bool = False,
     ) -> VectorStoreIndex:
         if self.repository_local_path is not None:
-            documents = self.load_documents(
+            load_document_fn = (
+                weave.op()(self.load_documents)
+                if track_load_documents
+                else self.load_documents
+            )
+            documents = load_document_fn(
                 included_directories=included_directories, num_workers=num_workers
             )
-            nodes = self.chunk_documents(
+            chunk_document_function = (
+                weave.op()(self.chunk_documents)
+                if track_chunk_documents
+                else self.chunk_documents
+            )
+            nodes = chunk_document_function(
                 documents,
                 buffer_size=buffer_size,
                 breakpoint_percentile_threshold=breakpoint_percentile_threshold,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
             )
             self._vector_index = (
                 VectorStoreIndex.from_documents(
@@ -133,16 +154,26 @@ class KerasIORetreiver(weave.Model):
                     persist_dir=vector_index_persist_dir
                 )
                 if wandb.run and artifact_name:
-                    artifact_metadata["embedding_model_name"] = (
-                        self.embedding_model_name
-                    )
+                    artifact_metadata = {
+                        **artifact_metadata,
+                        **{
+                            "embedding_model_name": self.embedding_model_name,
+                            "chunk_size": chunk_size,
+                            "chunk_overlap": chunk_overlap,
+                            "buffer_size": buffer_size,
+                            "breakpoint_percentile_threshold": breakpoint_percentile_threshold,
+                            "included_directories": included_directories,
+                            "build_index_from_documents": build_index_from_documents,
+                        },
+                    }
+                    artifact_aliases.append("latest")
                     artifact = wandb.Artifact(
                         name=artifact_name,
                         type="vector_index",
                         metadata=artifact_metadata,
                     )
                     artifact.add_dir(local_path=vector_index_persist_dir)
-                    artifact.save()
+                    wandb.log_artifact(artifact, aliases=artifact_aliases)
         return self._vector_index
 
     @weave.op()

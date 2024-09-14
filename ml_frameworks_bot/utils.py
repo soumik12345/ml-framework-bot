@@ -2,6 +2,7 @@ import os
 from glob import glob
 from typing import Callable, List
 
+import torch
 import weave
 from git import Repo
 from llama_index.core.base.embeddings.base import BaseEmbedding
@@ -52,7 +53,11 @@ def make_embedding_model(embedding_model_name: str) -> BaseEmbedding:
             "text-embedding-3-large",
             "text-embedding-ada-002",
         ]
-        else HuggingFaceEmbedding(model_name=embedding_model_name)
+        else HuggingFaceEmbedding(
+            model_name=embedding_model_name,
+            trust_remote_code=True,
+            model_kwargs={"torch_dtype": torch.float16},
+        )
     )
 
 
