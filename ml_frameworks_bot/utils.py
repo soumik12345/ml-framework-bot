@@ -80,3 +80,13 @@ def build_keras_io_sources(repository_local_path: str):
     os.chdir("scripts")
     subprocess.run(["python", "autogen.py", "make"])
     os.chdir(working_directory)
+
+
+def build_pytorch_sources(repository_local_path: str):
+    working_directory = os.getcwd()
+    os.chdir(repository_local_path)
+    os.chdir("docs")
+    subprocess.run(["pip", "install", "-r", "requirements.txt"])
+    subprocess.run(["npm", "install", "-g", "katex"])
+    subprocess.run(["make", "text"])
+    os.chdir(working_directory)
