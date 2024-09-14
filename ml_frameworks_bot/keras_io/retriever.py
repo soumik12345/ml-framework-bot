@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict, List, Optional, Union
 
+import torch
 import weave
 from llama_index.core import (
     Settings,
@@ -27,6 +28,7 @@ class KerasIORetreiver(weave.Model):
     embedding_model_name: str
     repository_local_path: Optional[str]
     similarity_top_k: int
+    torch_dtype: str
     repository: str = "https://github.com/keras-team/keras-io"
     wandb_artifact_address: Optional[str] = None
     _vector_index: VectorStoreIndex = None
@@ -35,6 +37,7 @@ class KerasIORetreiver(weave.Model):
     def __init__(
         self,
         embedding_model_name: str,
+        torch_dtype: torch.dtype,
         similarity_top_k: int = 10,
         repository_local_path: Optional[str] = None,
         vector_index: Optional[VectorStoreIndex] = None,
@@ -43,6 +46,7 @@ class KerasIORetreiver(weave.Model):
             embedding_model_name=embedding_model_name,
             similarity_top_k=similarity_top_k,
             repository_local_path=repository_local_path,
+            torch_dtype=str(torch_dtype),
         )
         self.repository_local_path = repository_local_path
         self._vector_index = vector_index
@@ -50,10 +54,17 @@ class KerasIORetreiver(weave.Model):
             raise ValueError(
                 "Both `repository_local_path` and `vector_index` cannot be `None`."
             )
-        Settings.embed_model = make_embedding_model(self.embedding_model_name)
+        Settings.embed_model = make_embedding_model(
+            self.embedding_model_name, model_kwargs={"torch_dtype": torch_dtype}
+        )
 
     @classmethod
-    def from_wandb_artifact(cls, artifact_address: str, similarity_top_k: int = 10):
+    def from_wandb_artifact(
+        cls,
+        artifact_address: str,
+        torch_dtype: torch.dtype = torch.float16,
+        similarity_top_k: int = 10,
+    ):
         api = wandb.Api()
         artifact = api.artifact(artifact_address)
         artifact_dir = artifact.download()
@@ -66,6 +77,7 @@ class KerasIORetreiver(weave.Model):
             embedding_model_name=embedding_model_name,
             similarity_top_k=similarity_top_k,
             vector_index=vector_index,
+            torch_dtype=torch_dtype,
         )
         _cls.wandb_artifact_address = artifact_address
         return _cls
@@ -172,7 +184,9 @@ class KerasIORetreiver(weave.Model):
                 else document_nodes
             )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
-            assert len(document_nodes) == len(self._vector_index.docstore.docs), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"
+            assert len(document_nodes) == len(
+                self._vector_index.docstore.docs
+            ), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(
                     persist_dir=vector_index_persist_dir
@@ -188,6 +202,7 @@ class KerasIORetreiver(weave.Model):
                             "buffer_size": buffer_size,
                             "breakpoint_percentile_threshold": breakpoint_percentile_threshold,
                             "included_directories": included_directories,
+                            "torch_dtype": self.torch_dtype,
                         },
                     }
                     artifact_aliases.append("latest")

@@ -1,9 +1,8 @@
 import os
 import subprocess
 from glob import glob
-from typing import Callable, List
+from typing import Any, Callable, Dict, List, Optional
 
-import torch
 import weave
 from git import Repo
 from llama_index.core.base.embeddings.base import BaseEmbedding
@@ -45,7 +44,9 @@ def get_all_file_paths(
     return file_paths
 
 
-def make_embedding_model(embedding_model_name: str) -> BaseEmbedding:
+def make_embedding_model(
+    embedding_model_name: str, model_kwargs: Optional[Dict[str, Any]] = {}
+) -> BaseEmbedding:
     return (
         OpenAIEmbedding(model_name=embedding_model_name)
         if embedding_model_name
@@ -57,7 +58,7 @@ def make_embedding_model(embedding_model_name: str) -> BaseEmbedding:
         else HuggingFaceEmbedding(
             model_name=embedding_model_name,
             trust_remote_code=True,
-            model_kwargs={"torch_dtype": torch.float16},
+            model_kwargs=model_kwargs,
         )
     )
 
