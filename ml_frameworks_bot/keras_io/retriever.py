@@ -15,7 +15,7 @@ from llama_index.core.schema import BaseNode, Document, NodeWithScore
 
 import wandb
 
-from ..utils import fetch_git_repository, get_all_file_paths, make_embedding_model
+from ..utils import fetch_git_repository, get_all_file_paths, make_embedding_model, build_keras_io_sources
 
 
 class KerasIORetreiver(weave.Model):
@@ -79,6 +79,9 @@ class KerasIORetreiver(weave.Model):
             repository_name,
             personal_access_token,
         )
+        source_directory = os.path.join(self.repository_local_path, "sources")
+        if not os.path.exists(source_directory):
+            build_keras_io_sources(repository_local_path=self.repository_local_path)
         input_files = []
         for directory in included_directories:
             input_files += get_all_file_paths(
