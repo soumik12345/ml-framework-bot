@@ -14,3 +14,10 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "weave>=0.51.5",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3.3"]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+testpaths = ["tests"]
