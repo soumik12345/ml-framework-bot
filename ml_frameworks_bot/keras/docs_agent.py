@@ -10,7 +10,7 @@ from rich.progress import track
 
 from ..schema import KerasOperations
 from ..utils import weave_op_wrapper
-from .retriever import KerasIORetreiver
+from .retriever import KerasDocumentationRetreiver
 
 
 class KerasOpWithAPIReference(BaseModel):
@@ -20,10 +20,12 @@ class KerasOpWithAPIReference(BaseModel):
 
 class KerasDocumentationAgent(weave.Model):
     llm_name: str
-    api_reference_retriever: KerasIORetreiver
+    api_reference_retriever: KerasDocumentationRetreiver
     _llm_client: Instructor
 
-    def __init__(self, llm_name: str, api_reference_retriever: KerasIORetreiver):
+    def __init__(
+        self, llm_name: str, api_reference_retriever: KerasDocumentationRetreiver
+    ):
         super().__init__(
             llm_name=llm_name, api_reference_retriever=api_reference_retriever
         )
