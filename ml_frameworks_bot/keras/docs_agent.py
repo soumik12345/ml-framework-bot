@@ -16,6 +16,7 @@ from .retriever import KerasDocumentationRetreiver
 class KerasOpWithAPIReference(BaseModel):
     keras_op: str
     api_reference: str
+    api_reference_path: str
 
 
 class KerasDocumentationAgent(weave.Model):
@@ -82,7 +83,9 @@ Here are some rules:
             )[0]
             ops_with_api_reference.append(
                 KerasOpWithAPIReference(
-                    keras_op=keras_op, api_reference=api_reference.text
+                    keras_op=keras_op,
+                    api_reference=api_reference.text,
+                    api_reference_path=api_reference.node.metadata["file_path"],
                 )
             )
         return ops_with_api_reference
