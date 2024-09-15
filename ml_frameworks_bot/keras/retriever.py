@@ -89,7 +89,7 @@ class KerasDocumentationRetreiver(weave.Model):
     ) -> List[Union[BaseNode, Document]]:
         repository_owner = self.repository.split("/")[-2]
         repository_name = self.repository.split("/")[-1]
-        personal_access_token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+        personal_access_token = os.getenv("PERSONAL_ACCESS_TOKEN")
         fetch_git_repository(
             self.repository_local_path,
             repository_owner,
