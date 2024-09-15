@@ -5,7 +5,7 @@ from ml_frameworks_bot.keras import KerasDocumentationRetreiver
 load_dotenv()
 
 
-def test_retriever():
+def test_keras_retriever():
     retriever = KerasDocumentationRetreiver.from_wandb_artifact(
         artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
     )
