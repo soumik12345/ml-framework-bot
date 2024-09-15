@@ -5,6 +5,8 @@ An agentic workflow to translate machine learning codebases across ML frameworks
 ## Installation
 
 ```bash
+pip install -U pip
+pip install -U uv
 uv sync
 ```
 
