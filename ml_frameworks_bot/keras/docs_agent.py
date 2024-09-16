@@ -4,13 +4,12 @@ import instructor
 import weave
 from instructor import Instructor
 from litellm import completion
-from llama_index.core.schema import BaseNode
 from pydantic import BaseModel
 from rich.progress import track
 
 from ..schema import KerasOperations
 from ..utils import weave_op_wrapper
-from .retriever import KerasDocumentationRetreiver
+from .retriever import KerasDocumentationRetriever
 
 
 class KerasOpWithAPIReference(BaseModel):
@@ -21,11 +20,11 @@ class KerasOpWithAPIReference(BaseModel):
 
 class KerasDocumentationAgent(weave.Model):
     llm_name: str
-    api_reference_retriever: KerasDocumentationRetreiver
+    api_reference_retriever: KerasDocumentationRetriever
     _llm_client: Instructor
 
     def __init__(
-        self, llm_name: str, api_reference_retriever: KerasDocumentationRetreiver
+        self, llm_name: str, api_reference_retriever: KerasDocumentationRetriever
     ):
         super().__init__(
             llm_name=llm_name, api_reference_retriever=api_reference_retriever
@@ -73,12 +72,14 @@ Here are some rules:
         return unique_keras_ops
 
     @weave.op()
-    def retrieve_api_references(self, keras_ops: KerasOperations) -> List[BaseNode]:
+    def retrieve_api_references(
+        self, keras_ops: KerasOperations
+    ) -> List[KerasOpWithAPIReference]:
         ops_with_api_reference = []
         for keras_op in track(
             keras_ops.operations, description="Retrieving api references:"
         ):
-            api_reference: BaseNode = self.api_reference_retriever.predict(
+            api_reference = self.api_reference_retriever.predict(
                 query=f"API reference for `{keras_op}`"
             )[0]
             ops_with_api_reference.append(
@@ -93,7 +94,7 @@ Here are some rules:
     @weave.op()
     def predict(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
-    ) -> List[BaseNode]:
+    ) -> List[KerasOpWithAPIReference]:
         keras_ops = self.extract_keras_operations(
             code_snippet=code_snippet, seed=seed, max_retries=max_retries
         )

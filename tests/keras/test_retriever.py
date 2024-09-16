@@ -1,12 +1,12 @@
 from dotenv import load_dotenv
 
-from ml_frameworks_bot.keras import KerasDocumentationRetreiver
+from ml_frameworks_bot.keras import KerasDocumentationRetriever
 
 load_dotenv()
 
 
 def test_keras_retriever():
-    retriever = KerasDocumentationRetreiver.from_wandb_artifact(
+    retriever = KerasDocumentationRetriever.from_wandb_artifact(
         artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
     )
     retrieved_nodes = retriever.predict(

@@ -1,4 +1,4 @@
 from .docs_agent import KerasDocumentationAgent
-from .retriever import KerasDocumentationRetreiver
+from .retriever import KerasDocumentationRetriever
 
-__all__ = ["KerasDocumentationRetreiver", "KerasDocumentationAgent"]
+__all__ = ["KerasDocumentationRetriever", "KerasDocumentationAgent"]

@@ -14,19 +14,19 @@ uv sync
 
 <details>
 <summary>Build Vector Index for <a href="https://keras.io/">keras.io</a></summary>
-  
+
 ```python
 import torch
 from dotenv import load_dotenv
 
 import wandb
-from ml_frameworks_bot.keras import KerasDocumentationRetreiver
+from ml_frameworks_bot.keras import KerasDocumentationRetriever
 
 load_dotenv()
 wandb.init(
     project="ml-frameworks-bot", entity="ml-colabs", job_type="build_vector_index"
 )
-retriever = KerasDocumentationRetreiver(
+retriever = KerasDocumentationRetriever(
     embedding_model_name="BAAI/bge-small-en-v1.5",
     torch_dtype=torch.float16,
     repository_local_path="keras_docs",
@@ -41,16 +41,16 @@ vector_index = retriever.index_documents(
 
 <details>
 <summary>Load <a href="https://keras.io/">keras.io</a> Retreiver from Vector Index and perform Retrieval</summary>
-  
+
 ```python
 import weave
 from dotenv import load_dotenv
 
-from ml_frameworks_bot.keras import KerasDocumentationRetreiver
+from ml_frameworks_bot.keras import KerasDocumentationRetriever
 
 load_dotenv()
 weave.init(project_name="ml-colabs/ml-frameworks-bot")
-retriever = KerasDocumentationRetreiver.from_wandb_artifact(
+retriever = KerasDocumentationRetriever.from_wandb_artifact(
     artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
 )
 retrieved_nodes = retriever.predict(
@@ -61,16 +61,16 @@ retrieved_nodes = retriever.predict(
 
 <details>
 <summary>Run a Keras Documentation Agent</summary>
-  
+
 ```python
 import weave
 from dotenv import load_dotenv
 
-from ml_frameworks_bot.keras import KerasDocumentationRetreiver, KerasDocumentationAgent
+from ml_frameworks_bot.keras import KerasDocumentationRetriever, KerasDocumentationAgent
 
 load_dotenv()
 weave.init(project_name="ml-colabs/ml-frameworks-bot")
-api_reference_retriever = KerasDocumentationRetreiver.from_wandb_artifact(
+api_reference_retriever = KerasDocumentationRetriever.from_wandb_artifact(
     artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
 )
 keras_docs_agent = KerasDocumentationAgent(

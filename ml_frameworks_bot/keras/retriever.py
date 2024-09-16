@@ -23,7 +23,7 @@ from ..utils import (
 )
 
 
-class KerasDocumentationRetreiver(weave.Model):
+class KerasDocumentationRetriever(weave.Model):
     embedding_model_name: str
     repository_local_path: Optional[str]
     similarity_top_k: int
@@ -31,7 +31,7 @@ class KerasDocumentationRetreiver(weave.Model):
     repository: str = "https://github.com/keras-team/keras-io"
     wandb_artifact_address: Optional[str] = None
     _vector_index: VectorStoreIndex = None
-    _retreival_engine: BaseRetriever = None
+    _retrieval_engine: BaseRetriever = None
 
     def __init__(
         self,
@@ -216,9 +216,9 @@ class KerasDocumentationRetreiver(weave.Model):
 
     @weave.op()
     def predict(self, query: str) -> List[NodeWithScore]:
-        if self._retreival_engine is None:
-            self._retreival_engine = self._vector_index.as_retriever(
+        if self._retrieval_engine is None:
+            self._retrieval_engine = self._vector_index.as_retriever(
                 similarity_top_k=self.similarity_top_k
             )
-        retreived_nodes = self._retreival_engine.retrieve(query)
-        return retreived_nodes
+        retrieved_nodes = self._retrieval_engine.retrieve(query)
+        return retrieved_nodes
