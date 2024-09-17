@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import torch
 import weave
@@ -146,8 +146,8 @@ class KerasDocumentationRetriever(weave.Model):
 
     def index_documents(
         self,
-        included_directories: List[str] = ["examples", "guides", "templates"],
-        exclude_file_postfixes: List[str] = ["index.md"],
+        included_directories: Sequence[str] = ("examples", "guides", "templates"),
+        exclude_file_postfixes: Sequence[str] = ("index.md"),
         apply_chunking: bool = False,
         chunk_size: int = 1024,
         chunk_overlap: int = 20,

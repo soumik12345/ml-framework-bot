@@ -4,6 +4,7 @@ import instructor
 import weave
 from instructor import Instructor
 from litellm import completion
+from packaging.version import Version
 from pydantic import BaseModel
 from rich.progress import track
 
@@ -18,16 +19,37 @@ class KerasOpWithAPIReference(BaseModel):
     api_reference_path: str
 
 
+def postprocess_keras_op_name(keras_op_name: str, keras_version: str) -> str:
+    keras_op_name = (
+        "keras." + keras_op_name
+        if not keras_op_name.startswith("keras.")
+        else keras_op_name
+    )
+    keras_op_name = (
+        "tensorflow." + keras_op_name
+        if Version(keras_version) < Version("3.0.0")
+        and not keras_version.startswith("tensorflow")
+        else keras_op_name
+    )
+    return keras_op_name
+
+
 class KerasDocumentationAgent(weave.Model):
     llm_name: str
     api_reference_retriever: KerasDocumentationRetriever
+    keras_api_version: str
     _llm_client: Instructor
 
     def __init__(
-        self, llm_name: str, api_reference_retriever: KerasDocumentationRetriever
+        self,
+        llm_name: str,
+        api_reference_retriever: KerasDocumentationRetriever,
+        keras_api_version: str = "3.5.0",
     ):
         super().__init__(
-            llm_name=llm_name, api_reference_retriever=api_reference_retriever
+            llm_name=llm_name,
+            api_reference_retriever=api_reference_retriever,
+            keras_api_version=keras_api_version,
         )
         self._llm_client = instructor.from_litellm(completion)
 
@@ -79,12 +101,15 @@ Here are some rules:
         for keras_op in track(
             keras_ops.operations, description="Retrieving api references:"
         ):
+            query_op_name = keras_op.replace("keras.", "").replace("tensorflow.", "")
             api_reference = self.api_reference_retriever.predict(
-                query=f"API reference for `{keras_op}`"
+                query=f"API reference for `{query_op_name}`"
             )[0]
             ops_with_api_reference.append(
                 KerasOpWithAPIReference(
-                    keras_op=keras_op,
+                    keras_op=postprocess_keras_op_name(
+                        keras_op_name=keras_op, keras_version=self.keras_api_version
+                    ),
                     api_reference=api_reference.text,
                     api_reference_path=api_reference.node.metadata["file_path"],
                 )
