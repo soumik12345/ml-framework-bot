@@ -10,8 +10,10 @@ dependencies = [
     "llama-index>=0.11.8",
     "llama-index-embeddings-huggingface>=0.3.1",
     "llama-index-embeddings-openai>=0.2.4",
+    "llama-index-postprocessor-flag-embedding-reranker>=0.2.0",
     "openai>=1.44.1",
     "python-dotenv>=1.0.1",
+    "uv>=0.4.10",
     "weave>=0.51.5",
 ]
 
