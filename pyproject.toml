@@ -5,7 +5,9 @@ description = "An agentic workflow to translate machine learning codebases acros
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "black>=24.8.0",
     "instructor>=1.4.1",
+    "isort>=5.13.2",
     "litellm>=1.44.28",
     "llama-index>=0.11.8",
     "llama-index-embeddings-huggingface>=0.3.1",
@@ -13,6 +15,7 @@ dependencies = [
     "llama-index-postprocessor-flag-embedding-reranker>=0.2.0",
     "openai>=1.44.1",
     "python-dotenv>=1.0.1",
+    "ruff>=0.6.5",
     "uv>=0.4.10",
     "weave>=0.51.5",
 ]
