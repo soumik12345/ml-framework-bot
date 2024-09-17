@@ -47,7 +47,7 @@ class KerasDocumentationAgent(weave.Model):
                     "role": "system",
                     "content": """
 You are an experienced machine learning engineer expert in python and Keras.
-You are suppossed to think step-by-step about all the unique Keras operations,
+You are supposed to think step-by-step about all the unique Keras operations,
 layers, and functions from a given snippet of code.
 
 Here are some rules:

@@ -2,7 +2,6 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 import torch
-import wandb
 import weave
 from llama_index.core import (
     Settings,
@@ -13,7 +12,10 @@ from llama_index.core import (
 from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document, NodeWithScore, TextNode
+from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
 from rich.progress import track
+
+import wandb
 
 from ..utils import (
     build_keras_io_sources,
@@ -25,6 +27,7 @@ from ..utils import (
 
 class KerasDocumentationRetriever(weave.Model):
     embedding_model_name: str
+    reranking_model_name: Optional[str]
     repository_local_path: Optional[str]
     similarity_top_k: int
     torch_dtype: str
@@ -38,12 +41,14 @@ class KerasDocumentationRetriever(weave.Model):
         embedding_model_name: str,
         torch_dtype: torch.dtype,
         similarity_top_k: int = 10,
+        reranking_model_name: Optional[str] = None,
         repository_local_path: Optional[str] = None,
         vector_index: Optional[VectorStoreIndex] = None,
     ):
         super().__init__(
             embedding_model_name=embedding_model_name,
             similarity_top_k=similarity_top_k,
+            reranking_model_name=reranking_model_name,
             repository_local_path=repository_local_path,
             torch_dtype=str(torch_dtype),
         )
@@ -217,8 +222,13 @@ class KerasDocumentationRetriever(weave.Model):
     @weave.op()
     def predict(self, query: str) -> List[NodeWithScore]:
         if self._retrieval_engine is None:
-            self._retrieval_engine = self._vector_index.as_retriever(
-                similarity_top_k=self.similarity_top_k
-            )
+            kwargs = {"similarity_top_k": self.similarity_top_k}
+            if self.reranking_model_name is not None:
+                kwargs["node_postprocessors"] = [
+                    FlagEmbeddingReranker(
+                        top_n=self.similarity_top_k, model=self.reranking_model_name
+                    )
+                ]
+            self._retrieval_engine = self._vector_index.as_retriever(**kwargs)
         retrieved_nodes = self._retrieval_engine.retrieve(query)
         return retrieved_nodes
