@@ -1,8 +1,7 @@
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import torch
-import wandb
 import weave
 from llama_index.core import (
     Settings,
@@ -11,9 +10,12 @@ from llama_index.core import (
     load_index_from_storage,
 )
 from llama_index.core.base.base_retriever import BaseRetriever
+from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document, NodeWithScore, TextNode
 from rich.progress import track
+
+import wandb
 
 from ..utils import (
     build_keras_io_sources,
@@ -23,15 +25,32 @@ from ..utils import (
 )
 
 
-class KerasDocumentationRetreiver(weave.Model):
+def chunk_documents(
+    documents: List[Document],
+    buffer_size: int = 1,
+    breakpoint_percentile_threshold: int = 95,
+    chunk_size: int = 1024,
+    chunk_overlap: int = 20,
+) -> List[BaseNode]:
+    Settings.chunk_size = chunk_size
+    Settings.chunk_overlap = chunk_overlap
+    splitter = SemanticSplitterNodeParser(
+        buffer_size=buffer_size,
+        breakpoint_percentile_threshold=breakpoint_percentile_threshold,
+        embed_model=Settings.embed_model,
+    )
+    return splitter.get_nodes_from_documents(documents, show_progress=True)
+
+
+class KerasDocumentationRetriever(weave.Model):
     embedding_model_name: str
     repository_local_path: Optional[str]
     similarity_top_k: int
     torch_dtype: str
     repository: str = "https://github.com/keras-team/keras-io"
     wandb_artifact_address: Optional[str] = None
-    _vector_index: VectorStoreIndex = None
-    _retreival_engine: BaseRetriever = None
+    _vector_index: BaseIndex = None
+    _retrieval_engine: BaseRetriever = None
 
     def __init__(
         self,
@@ -39,7 +58,7 @@ class KerasDocumentationRetreiver(weave.Model):
         torch_dtype: torch.dtype,
         similarity_top_k: int = 10,
         repository_local_path: Optional[str] = None,
-        vector_index: Optional[VectorStoreIndex] = None,
+        vector_index: Optional[BaseIndex] = None,
     ):
         super().__init__(
             embedding_model_name=embedding_model_name,
@@ -83,8 +102,8 @@ class KerasDocumentationRetreiver(weave.Model):
 
     def load_documents(
         self,
-        included_directories: List[str] = ["examples", "guides", "templates"],
-        exclude_file_postfixes: List[str] = ["index.md"],
+        included_directories: Sequence[str] = ("examples", "guides", "templates"),
+        exclude_file_postfixes: Sequence[str] = ("index.md"),
         return_nodes: bool = True,
     ) -> List[Union[BaseNode, Document]]:
         repository_owner = self.repository.split("/")[-2]
@@ -122,27 +141,10 @@ class KerasDocumentationRetreiver(weave.Model):
                 )
         return document_nodes
 
-    def chunk_documents(
-        self,
-        documents: List[Document],
-        buffer_size: int = 1,
-        breakpoint_percentile_threshold: int = 95,
-        chunk_size: int = 1024,
-        chunk_overlap: int = 20,
-    ) -> List[BaseNode]:
-        Settings.chunk_size = chunk_size
-        Settings.chunk_overlap = chunk_overlap
-        splitter = SemanticSplitterNodeParser(
-            buffer_size=buffer_size,
-            breakpoint_percentile_threshold=breakpoint_percentile_threshold,
-            embed_model=Settings.embed_model,
-        )
-        return splitter.get_nodes_from_documents(documents, show_progress=True)
-
     def index_documents(
         self,
-        included_directories: List[str] = ["examples", "guides", "templates"],
-        exclude_file_postfixes: List[str] = ["index.md"],
+        included_directories: Sequence[str] = ("examples", "guides", "templates"),
+        exclude_file_postfixes: Sequence[str] = ("index.md"),
         apply_chunking: bool = False,
         chunk_size: int = 1024,
         chunk_overlap: int = 20,
@@ -154,7 +156,7 @@ class KerasDocumentationRetreiver(weave.Model):
         artifact_aliases: Optional[List[str]] = [],
         track_load_documents: bool = False,
         track_chunk_documents: bool = False,
-    ) -> VectorStoreIndex:
+    ) -> BaseIndex:
         if self.repository_local_path is not None:
             load_document_fn = (
                 weave.op()(self.load_documents)
@@ -167,9 +169,9 @@ class KerasDocumentationRetreiver(weave.Model):
                 return_nodes=not apply_chunking,
             )
             chunk_document_fn = (
-                weave.op()(self.chunk_documents)
+                weave.op()(chunk_documents)
                 if track_chunk_documents
-                else self.chunk_documents
+                else chunk_documents
             )
             document_nodes = (
                 chunk_document_fn(
@@ -216,9 +218,9 @@ class KerasDocumentationRetreiver(weave.Model):
 
     @weave.op()
     def predict(self, query: str) -> List[NodeWithScore]:
-        if self._retreival_engine is None:
-            self._retreival_engine = self._vector_index.as_retriever(
+        if self._retrieval_engine is None:
+            self._retrieval_engine = self._vector_index.as_retriever(
                 similarity_top_k=self.similarity_top_k
             )
-        retreived_nodes = self._retreival_engine.retrieve(query)
-        return retreived_nodes
+        retrieved_nodes = self._retrieval_engine.retrieve(query)
+        return retrieved_nodes
