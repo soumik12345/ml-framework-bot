@@ -7,7 +7,7 @@ load_dotenv()
 
 def test_keras_retriever():
     retriever = KerasDocumentationRetriever.from_wandb_artifact(
-        artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
+        artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:v5"
     )
     retrieved_nodes = retriever.predict(
         query="Fetch the API referece for `keras.layers.Dense`"
