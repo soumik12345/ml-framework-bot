@@ -73,13 +73,30 @@ Here are some rules:
         return unique_keras_ops
 
     @weave.op()
+    def ask_llm_about_op(self, keras_op: str) -> str:
+        return (
+            completion(
+                model=self.llm_name,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"Describe the purpose of `{keras_op}` in less than 50 words",
+                    }
+                ],
+            )
+            .choices[0]
+            .message.content
+        )
+
+    @weave.op()
     def retrieve_api_references(self, keras_ops: KerasOperations) -> List[BaseNode]:
         ops_with_api_reference = []
         for keras_op in track(
             keras_ops.operations, description="Retrieving api references:"
         ):
+            purpose_of_op = self.ask_llm_about_op(keras_op)
             api_reference: BaseNode = self.api_reference_retriever.predict(
-                query=f"API reference for `{keras_op}`"
+                query=f"API reference for `{keras_op}`.\n{purpose_of_op}"
             )[0]
             ops_with_api_reference.append(
                 KerasOpWithAPIReference(
