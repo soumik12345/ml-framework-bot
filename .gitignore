@@ -165,3 +165,4 @@ keras_docs/
 wandb/
 vector_indices/
 artifacts/
+jax_docs/
