@@ -54,12 +54,26 @@ class LLMClientWrapper(weave.Model):
                 else self._llm_client.chat.completions.create(
                     model=self.model_name, **kwargs
                 )
+                .choices[0]
+                .message.content
             )
         elif self.model_name in get_args(get_args(anthropic.types.model.Model)[-1]):
+            if "max_tokens" not in kwargs:
+                kwargs["max_tokens"] = 1024
+            if "seed" in kwargs:
+                kwargs.pop("seed")
+            system_prompt = None
+            for idx, message in enumerate(kwargs["messages"]):
+                if message["role"] == "system":
+                    system_prompt = kwargs["messages"].pop(idx)["content"]
+                if system_prompt is not None:
+                    kwargs["system"] = system_prompt
             return (
                 self._structured_llm_client.chat.completions.create(
                     model=self.model_name, **kwargs
                 )
                 if "response_model" in kwargs
                 else self._llm_client.messages.create(model=self.model_name, **kwargs)
+                .content[0]
+                .text
             )

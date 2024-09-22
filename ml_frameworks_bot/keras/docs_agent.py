@@ -17,18 +17,21 @@ class KerasOpWithAPIReference(BaseModel):
 
 
 class KerasDocumentationAgent(weave.Model):
-    llm_client: LLMClientWrapper
+    op_extraction_llm_client: LLMClientWrapper
+    retrieval_augmentation_llm_client: LLMClientWrapper
     api_reference_retriever: KerasDocumentationRetreiver
     use_rich_progressbar: bool
 
     def __init__(
         self,
-        llm_client: LLMClientWrapper,
+        op_extraction_llm_client: LLMClientWrapper,
+        retrieval_augmentation_llm_client: LLMClientWrapper,
         api_reference_retriever: KerasDocumentationRetreiver,
         use_rich_progressbar: bool = True,
     ):
         super().__init__(
-            llm_client=llm_client,
+            op_extraction_llm_client=op_extraction_llm_client,
+            retrieval_augmentation_llm_client=retrieval_augmentation_llm_client,
             api_reference_retriever=api_reference_retriever,
             use_rich_progressbar=use_rich_progressbar,
         )
@@ -37,7 +40,7 @@ class KerasDocumentationAgent(weave.Model):
     def extract_keras_operations(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
     ) -> KerasOperations:
-        keras_operations: KerasOperations = self.llm_client.predict(
+        keras_operations: KerasOperations = self.op_extraction_llm_client.predict(
             max_retries=max_retries,
             response_model=KerasOperations,
             seed=seed,
@@ -72,17 +75,13 @@ Here are some rules:
 
     @weave.op()
     def ask_llm_about_op(self, keras_op: str) -> str:
-        return (
-            self.llm_client.predict(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": f"Describe the purpose of `{keras_op}` in less than 100 words",
-                    }
-                ],
-            )
-            .choices[0]
-            .message.content
+        return self.retrieval_augmentation_llm_client.predict(
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Describe the purpose of `{keras_op}` in less than 100 words",
+                }
+            ],
         )
 
     @weave.op()
