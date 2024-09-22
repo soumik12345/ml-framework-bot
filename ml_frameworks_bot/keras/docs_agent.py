@@ -1,15 +1,12 @@
 from typing import Dict, List, Optional
 
-import instructor
 import weave
-from instructor import Instructor
 from llama_index.core.schema import BaseNode
-from openai import OpenAI
 from pydantic import BaseModel
 from rich.progress import track
 
+from ..llm_wrapper import LLMClientWrapper
 from ..schema import KerasOperations
-from ..utils import weave_op_wrapper
 from .retriever import KerasDocumentationRetreiver
 
 
@@ -20,34 +17,27 @@ class KerasOpWithAPIReference(BaseModel):
 
 
 class KerasDocumentationAgent(weave.Model):
-    llm_name: str
+    llm_client: LLMClientWrapper
     api_reference_retriever: KerasDocumentationRetreiver
     use_rich_progressbar: bool
-    _llm_client: OpenAI
-    _structured_llm_client: Instructor
 
     def __init__(
         self,
-        llm_name: str,
+        llm_client: LLMClientWrapper,
         api_reference_retriever: KerasDocumentationRetreiver,
         use_rich_progressbar: bool = True,
     ):
         super().__init__(
-            llm_name=llm_name,
+            llm_client=llm_client,
             api_reference_retriever=api_reference_retriever,
             use_rich_progressbar=use_rich_progressbar,
         )
-        self._llm_client = OpenAI()
-        self._structured_llm_client = instructor.from_openai(self._llm_client)
 
     @weave.op()
     def extract_keras_operations(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
     ) -> KerasOperations:
-        keras_operations: KerasOperations = weave_op_wrapper(
-            name="Instructor.chat.completions.create"
-        )(self._structured_llm_client.chat.completions.create)(
-            model=self.llm_name,
+        keras_operations: KerasOperations = self.llm_client.predict(
             max_retries=max_retries,
             response_model=KerasOperations,
             seed=seed,
@@ -83,8 +73,7 @@ Here are some rules:
     @weave.op()
     def ask_llm_about_op(self, keras_op: str) -> str:
         return (
-            self._llm_client.chat.completions.create(
-                model=self.llm_name,
+            self.llm_client.predict(
                 messages=[
                     {
                         "role": "system",
