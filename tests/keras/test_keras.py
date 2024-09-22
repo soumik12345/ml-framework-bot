@@ -28,7 +28,7 @@ def test_keras_docs_agent(repository_local_path="keras_docs"):
         artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
     )
     keras_docs_agent = KerasDocumentationAgent(
-        llm_name="gpt-4o", api_reference_retriever=api_reference_retriever, use_rich_progressbar=False
+        llm_name="o1-preview", api_reference_retriever=api_reference_retriever, use_rich_progressbar=False
     )
     evaluation = weave.Evaluation(
         dataset=weave.ref("keras_evaluation_dataset:v0").get(),
