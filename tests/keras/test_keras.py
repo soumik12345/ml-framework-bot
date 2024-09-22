@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from ml_frameworks_bot.keras import KerasDocumentationAgent, KerasDocumentationRetreiver
 from ml_frameworks_bot.keras.metrics import KerasDocumentationAgentJudge
+from ml_frameworks_bot.llm_wrapper import LLMClientWrapper
 
 load_dotenv()
 
@@ -29,7 +30,10 @@ def test_keras_docs_agent(repository_local_path="keras_docs"):
         artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
     )
     keras_docs_agent = KerasDocumentationAgent(
-        llm_name="o1-preview",
+        op_extraction_llm_client=LLMClientWrapper(
+            model_name="claude-3-5-sonnet-20240620"
+        ),
+        retrieval_augmentation_llm_client=LLMClientWrapper(model_name="gpt-4o"),
         api_reference_retriever=api_reference_retriever,
         use_rich_progressbar=False,
     )
