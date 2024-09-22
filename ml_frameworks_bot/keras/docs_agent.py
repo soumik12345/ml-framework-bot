@@ -82,7 +82,7 @@ Here are some rules:
                 messages=[
                     {
                         "role": "system",
-                        "content": f"Describe the purpose of `{keras_op}` in less than 50 words",
+                        "content": f"Describe the purpose of `{keras_op}` in less than 100 words",
                     }
                 ],
             )
