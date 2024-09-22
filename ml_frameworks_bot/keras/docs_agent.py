@@ -3,8 +3,8 @@ from typing import List, Optional
 import instructor
 import weave
 from instructor import Instructor
-from litellm import completion
 from llama_index.core.schema import BaseNode
+from openai import OpenAI
 from pydantic import BaseModel
 from rich.progress import track
 
@@ -22,7 +22,8 @@ class KerasOpWithAPIReference(BaseModel):
 class KerasDocumentationAgent(weave.Model):
     llm_name: str
     api_reference_retriever: KerasDocumentationRetreiver
-    _llm_client: Instructor
+    _llm_client: OpenAI
+    _structured_llm_client: Instructor
 
     def __init__(
         self, llm_name: str, api_reference_retriever: KerasDocumentationRetreiver
@@ -30,7 +31,8 @@ class KerasDocumentationAgent(weave.Model):
         super().__init__(
             llm_name=llm_name, api_reference_retriever=api_reference_retriever
         )
-        self._llm_client = instructor.from_litellm(completion)
+        self._llm_client = OpenAI()
+        self._structured_llm_client = instructor.from_openai(self._llm_client)
 
     @weave.op()
     def extract_keras_operations(
@@ -38,7 +40,7 @@ class KerasDocumentationAgent(weave.Model):
     ) -> KerasOperations:
         keras_operations: KerasOperations = weave_op_wrapper(
             name="Instructor.chat.completions.create"
-        )(self._llm_client.chat.completions.create)(
+        )(self._structured_llm_client.chat.completions.create)(
             model=self.llm_name,
             max_retries=max_retries,
             response_model=KerasOperations,
@@ -75,7 +77,7 @@ Here are some rules:
     @weave.op()
     def ask_llm_about_op(self, keras_op: str) -> str:
         return (
-            completion(
+            self._llm_client.chat.completions.create(
                 model=self.llm_name,
                 messages=[
                     {
