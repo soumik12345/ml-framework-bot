@@ -1,15 +1,12 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-import instructor
 import weave
-from instructor import Instructor
-from litellm import completion
 from llama_index.core.schema import BaseNode
 from pydantic import BaseModel
 from rich.progress import track
 
+from ..llm_wrapper import LLMClientWrapper
 from ..schema import KerasOperations
-from ..utils import weave_op_wrapper
 from .retriever import KerasDocumentationRetreiver
 
 
@@ -20,26 +17,30 @@ class KerasOpWithAPIReference(BaseModel):
 
 
 class KerasDocumentationAgent(weave.Model):
-    llm_name: str
+    op_extraction_llm_client: LLMClientWrapper
+    retrieval_augmentation_llm_client: LLMClientWrapper
     api_reference_retriever: KerasDocumentationRetreiver
-    _llm_client: Instructor
+    use_rich_progressbar: bool
 
     def __init__(
-        self, llm_name: str, api_reference_retriever: KerasDocumentationRetreiver
+        self,
+        op_extraction_llm_client: LLMClientWrapper,
+        retrieval_augmentation_llm_client: LLMClientWrapper,
+        api_reference_retriever: KerasDocumentationRetreiver,
+        use_rich_progressbar: bool = True,
     ):
         super().__init__(
-            llm_name=llm_name, api_reference_retriever=api_reference_retriever
+            op_extraction_llm_client=op_extraction_llm_client,
+            retrieval_augmentation_llm_client=retrieval_augmentation_llm_client,
+            api_reference_retriever=api_reference_retriever,
+            use_rich_progressbar=use_rich_progressbar,
         )
-        self._llm_client = instructor.from_litellm(completion)
 
     @weave.op()
     def extract_keras_operations(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
     ) -> KerasOperations:
-        keras_operations: KerasOperations = weave_op_wrapper(
-            name="Instructor.chat.completions.create"
-        )(self._llm_client.chat.completions.create)(
-            model=self.llm_name,
+        keras_operations: KerasOperations = self.op_extraction_llm_client.predict(
             max_retries=max_retries,
             response_model=KerasOperations,
             seed=seed,
@@ -73,13 +74,31 @@ Here are some rules:
         return unique_keras_ops
 
     @weave.op()
-    def retrieve_api_references(self, keras_ops: KerasOperations) -> List[BaseNode]:
+    def ask_llm_about_op(self, keras_op: str) -> str:
+        return self.retrieval_augmentation_llm_client.predict(
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Describe the purpose of `{keras_op}` in less than 100 words",
+                }
+            ],
+        )
+
+    @weave.op()
+    def retrieve_api_references(
+        self, keras_ops: KerasOperations
+    ) -> List[KerasOpWithAPIReference]:
         ops_with_api_reference = []
-        for keras_op in track(
-            keras_ops.operations, description="Retrieving api references:"
-        ):
+        iterable = keras_ops.operations
+        iterable = (
+            track(iterable, description="Retrieving api references:")
+            if self.use_rich_progressbar
+            else iterable
+        )
+        for keras_op in iterable:
+            purpose_of_op = self.ask_llm_about_op(keras_op)
             api_reference: BaseNode = self.api_reference_retriever.predict(
-                query=f"API reference for `{keras_op}`"
+                query=f"API reference for `{keras_op}`.\n{purpose_of_op}"
             )[0]
             ops_with_api_reference.append(
                 KerasOpWithAPIReference(
@@ -93,8 +112,12 @@ Here are some rules:
     @weave.op()
     def predict(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
-    ) -> List[BaseNode]:
+    ) -> Dict[str, List[KerasOpWithAPIReference]]:
         keras_ops = self.extract_keras_operations(
             code_snippet=code_snippet, seed=seed, max_retries=max_retries
         )
-        return self.retrieve_api_references(keras_ops=keras_ops)
+        return {
+            "retrieved_keras_ops_with_references": self.retrieve_api_references(
+                keras_ops=keras_ops
+            )
+        }
