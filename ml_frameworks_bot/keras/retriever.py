@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 import torch
+import wandb
 import weave
 from llama_index.core import (
     Settings,
@@ -13,8 +14,6 @@ from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document, NodeWithScore, TextNode
 from rich.progress import track
-
-import wandb
 
 from ..utils import (
     build_keras_io_sources,
@@ -88,6 +87,7 @@ class KerasDocumentationRetreiver(weave.Model):
         exclude_file_postfixes: List[str] = ["index.md"],
         return_nodes: bool = True,
     ) -> List[Union[BaseNode, Document]]:
+        # Clone the repository if not already cloned
         repository_owner = self.repository.split("/")[-2]
         repository_name = self.repository.split("/")[-1]
         personal_access_token = os.getenv("PERSONAL_ACCESS_TOKEN")
@@ -97,25 +97,40 @@ class KerasDocumentationRetreiver(weave.Model):
             repository_name,
             personal_access_token,
         )
+        # Build the sources if not already built
         source_directory = os.path.join(self.repository_local_path, "sources")
         if not os.path.exists(source_directory):
             build_keras_io_sources(repository_local_path=self.repository_local_path)
+
+        # Determine files for indexing
         input_files = []
         for directory in included_directories:
             input_files += get_all_file_paths(
                 os.path.join(self.repository_local_path, directory),
                 included_file_extensions=[".md"],
             )
+
+        # Load documents as TextNodes or Documents
         document_nodes = []
         for file_path in track(input_files, description="Loading documents:"):
+            # Exclude files with specific postfixes
             exclude_file = False
             for exclusion in exclude_file_postfixes:
                 if file_path.endswith(exclusion):
                     exclude_file = True
                     break
+
+            # Load the file content
             if not exclude_file:
                 with open(file_path, "r") as file:
                     text = file.read()
+
+                    # If file_path contains "ops/" and contains "----" then split based on "----"
+                    if file_path.contains("ops/"):
+                        texts = text.split("----")
+                        nodes = [TextNode(text=text) for text in texts]
+                        document_nodes.extend(nodes)
+
                 document_nodes.append(
                     TextNode(text=text, metadata={"file_path": file_path})
                     if return_nodes
