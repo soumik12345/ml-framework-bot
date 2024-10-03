@@ -35,7 +35,7 @@ def test_keras_docs_agent(repository_local_path="keras_docs"):
         ),
         retrieval_augmentation_llm_client=LLMClientWrapper(model_name="gpt-4o"),
         api_reference_retriever=api_reference_retriever,
-        use_rich_progressbar=False,
+        use_rich=False,
     )
     evaluation = weave.Evaluation(
         dataset=weave.ref("keras_evaluation_dataset:v0").get(),
