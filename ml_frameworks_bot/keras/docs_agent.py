@@ -20,20 +20,20 @@ class KerasDocumentationAgent(weave.Model):
     op_extraction_llm_client: LLMClientWrapper
     retrieval_augmentation_llm_client: LLMClientWrapper
     api_reference_retriever: KerasDocumentationRetreiver
-    use_rich_progressbar: bool
+    use_rich: bool
 
     def __init__(
         self,
         op_extraction_llm_client: LLMClientWrapper,
         retrieval_augmentation_llm_client: LLMClientWrapper,
         api_reference_retriever: KerasDocumentationRetreiver,
-        use_rich_progressbar: bool = True,
+        use_rich: bool = True,
     ):
         super().__init__(
             op_extraction_llm_client=op_extraction_llm_client,
             retrieval_augmentation_llm_client=retrieval_augmentation_llm_client,
             api_reference_retriever=api_reference_retriever,
-            use_rich_progressbar=use_rich_progressbar,
+            use_rich=use_rich,
         )
 
     @weave.op()
@@ -92,7 +92,7 @@ Here are some rules:
         iterable = keras_ops.operations
         iterable = (
             track(iterable, description="Retrieving api references:")
-            if self.use_rich_progressbar
+            if self.use_rich
             else iterable
         )
         for keras_op in iterable:
