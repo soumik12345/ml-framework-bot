@@ -216,7 +216,7 @@ class KerasDocumentationRetreiver(weave.Model):
 
     @weave.op()
     def predict(
-        self, query: str, api_reference_path: Optional[str]
+        self, query: str, api_reference_path: Optional[str] = None
     ) -> List[NodeWithScore]:
         if self._retreival_engine is None:
             if api_reference_path is not None:
