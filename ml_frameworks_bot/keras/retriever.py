@@ -183,8 +183,8 @@ class KerasDocumentationRetreiver(weave.Model):
                 else document_nodes
             )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
-            assert len(document_nodes) == len(
-                self._vector_index.docstore.docs
+            assert (
+                len(document_nodes) == len(self._vector_index.docstore.docs)
             ), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(
@@ -215,24 +215,27 @@ class KerasDocumentationRetreiver(weave.Model):
         return self._vector_index
 
     @weave.op()
-    def predict(self, query: str, api_reference_path: str) -> List[NodeWithScore]:
+    def predict(
+        self, query: str, api_reference_path: Optional[str]
+    ) -> List[NodeWithScore]:
         if self._retreival_engine is None:
-            from llama_index.core.vector_stores.types import (
-                ExactMatchFilter,
-                MetadataFilters,
-            )
+            if api_reference_path is not None:
+                from llama_index.core.vector_stores.types import (
+                    ExactMatchFilter,
+                    MetadataFilters,
+                )
 
-            filters = MetadataFilters(
-                filters=[
-                    ExactMatchFilter(
-                        metadata_key="file_path", metadata_value=api_reference_path
-                    )
-                ]
-            )
+                filters = MetadataFilters(
+                    filters=[
+                        ExactMatchFilter(
+                            metadata_key="file_path", metadata_value=api_reference_path
+                        )
+                    ]
+                )
 
             self._retreival_engine = self._vector_index.as_retriever(
                 similarity_top_k=self.similarity_top_k,
-                filters=filters,
+                filters=filters if api_reference_path is not None else None,
             )
         retreived_nodes = self._retreival_engine.retrieve(query)
         return retreived_nodes
