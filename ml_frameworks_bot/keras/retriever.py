@@ -226,11 +226,7 @@ class KerasDocumentationRetreiver(weave.Model):
                 )
 
                 filters = MetadataFilters(
-                    filters=[
-                        MetadataFilter(
-                            key="file_path", value=api_reference_path, operator="eq"
-                        )
-                    ]
+                    filters=[MetadataFilter(key="file_path", value=api_reference_path)]
                 )
 
             self._retreival_engine = self._vector_index.as_retriever(
