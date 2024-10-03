@@ -183,8 +183,8 @@ class KerasDocumentationRetreiver(weave.Model):
                 else document_nodes
             )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
-            assert len(document_nodes) == len(
-                self._vector_index.docstore.docs
+            assert (
+                len(document_nodes) == len(self._vector_index.docstore.docs)
             ), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(
@@ -221,14 +221,14 @@ class KerasDocumentationRetreiver(weave.Model):
         if self._retreival_engine is None:
             if api_reference_path is not None:
                 from llama_index.core.vector_stores.types import (
-                    ExactMatchFilter,
+                    MetadataFilter,
                     MetadataFilters,
                 )
 
                 filters = MetadataFilters(
                     filters=[
-                        ExactMatchFilter(
-                            metadata_key="file_path", metadata_value=api_reference_path
+                        MetadataFilter(
+                            key="file_path", value=api_reference_path, operator="eq"
                         )
                     ]
                 )
