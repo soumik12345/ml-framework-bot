@@ -100,7 +100,7 @@ Here are some rules:
             purpose_of_op = self.ask_llm_about_op(keras_op)
             api_reference: BaseNode = self.api_reference_retriever.predict(
                 query=f"API reference for `{keras_op}`.\n{purpose_of_op}",
-                api_reference_path=APIToDocMapping.get(keras_op),
+                api_reference_path=APIToDocMapping[keras_op],
             )[0]
             ops_with_api_reference.append(
                 KerasOpWithAPIReference(
