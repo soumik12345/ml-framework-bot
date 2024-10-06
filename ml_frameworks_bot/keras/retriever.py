@@ -215,23 +215,10 @@ class KerasDocumentationRetreiver(weave.Model):
         return self._vector_index
 
     @weave.op()
-    def predict(
-        self, query: str, api_reference_path: Optional[str] = None
-    ) -> List[NodeWithScore]:
+    def predict(self, query: str) -> List[NodeWithScore]:
         if self._retreival_engine is None:
-            if api_reference_path is not None:
-                from llama_index.core.vector_stores.types import (
-                    MetadataFilter,
-                    MetadataFilters,
-                )
-
-                filters = MetadataFilters(
-                    filters=[MetadataFilter(key="file_path", value=api_reference_path)]
-                )
-
             self._retreival_engine = self._vector_index.as_retriever(
                 similarity_top_k=self.similarity_top_k,
-                filters=filters if api_reference_path is not None else None,
             )
         retreived_nodes = self._retreival_engine.retrieve(query)
         return retreived_nodes
