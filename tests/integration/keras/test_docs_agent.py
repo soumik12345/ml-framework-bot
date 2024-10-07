@@ -47,7 +47,7 @@ def test_keras_docs_agent_neural_retriever(repository_local_path="keras_docs"):
 
 
 def test_keras_docs_agent_heuristic_retriever(
-    repository_local_path="artifacts/keras_docs",
+    repository_local_path="keras_docs",
 ):
     load_dotenv()
     weave.init(project_name="ml-colabs/ml-frameworks-bot")
