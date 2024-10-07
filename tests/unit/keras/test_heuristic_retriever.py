@@ -9,7 +9,7 @@ def test_keras_retriever():
     retriever = KerasDocumentationHeuristicRetreiver(
         repository_local_path="artifacts/keras_docs"
     )
-    retrieved_nodes = retriever.predict(keras_op="keras.layers.Dense")
+    retrieved_nodes = retriever.predict(query="keras.layers.Dense")
 
     assert (
         retrieved_nodes.metadata["file_path"]
