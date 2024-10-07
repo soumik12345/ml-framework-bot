@@ -22,7 +22,8 @@ def fetch_git_repository(
         repository = Repo.clone_from(repository_url, repository_local_path)
     else:
         repository = Repo(repository_local_path)
-    repository.remotes.origin.pull()
+    if len(repository.remotes) != 0:
+        repository.remotes.origin.pull()
 
 
 def get_all_file_paths(
