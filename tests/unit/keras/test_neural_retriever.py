@@ -14,5 +14,5 @@ def test_keras_retriever():
     )
     assert (
         retrieved_nodes[0].node.metadata["file_path"]
-        == "keras_docs/sources/api/layers/core_layers/dense.md"
+        == "sources/api/layers/core_layers/dense.md"
     )
