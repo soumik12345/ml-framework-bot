@@ -2,7 +2,6 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 import torch
-import wandb
 import weave
 from llama_index.core import (
     Settings,
@@ -14,6 +13,8 @@ from llama_index.core.base.base_retriever import BaseRetriever
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document, NodeWithScore, TextNode
 from rich.progress import track
+
+import wandb
 
 from ..utils import (
     build_keras_io_sources,
@@ -116,9 +117,23 @@ class KerasDocumentationRetreiver(weave.Model):
                 with open(file_path, "r") as file:
                     text = file.read()
                 document_nodes.append(
-                    TextNode(text=text, metadata={"file_path": file_path})
+                    TextNode(
+                        text=text,
+                        metadata={
+                            "file_path": file_path.replace(
+                                self.repository_local_path + "/", ""
+                            )
+                        },
+                    )
                     if return_nodes
-                    else Document(text=text, metadata={"file_path": file_path})
+                    else Document(
+                        text=text,
+                        metadata={
+                            "file_path": file_path.replace(
+                                self.repository_local_path + "/", ""
+                            )
+                        },
+                    )
                 )
         return document_nodes
 
