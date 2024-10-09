@@ -14,7 +14,7 @@ from ml_frameworks_bot.llm_wrapper import LLMClientWrapper
 load_dotenv()
 
 
-def test_keras_docs_agent_neural_retriever(repository_local_path="keras_docs"):
+def test_keras_docs_agent_neural_retriever(keras3_docs):
     load_dotenv()
     weave.init(project_name="ml-colabs/ml-frameworks-bot")
     api_reference_retriever = KerasDocumentationRetreiver.from_wandb_artifact(
@@ -30,9 +30,7 @@ def test_keras_docs_agent_neural_retriever(repository_local_path="keras_docs"):
     )
     evaluation = weave.Evaluation(
         dataset=weave.ref("keras_evaluation_dataset:v0").get(),
-        scorers=[
-            KerasDocumentationAgentJudge(repository_local_path=repository_local_path)
-        ],
+        scorers=[KerasDocumentationAgentJudge(repository_local_path=keras3_docs)],
     )
     summary = asyncio.run(evaluation.evaluate(keras_docs_agent))
     assert (
@@ -46,13 +44,11 @@ def test_keras_docs_agent_neural_retriever(repository_local_path="keras_docs"):
     )
 
 
-def test_keras_docs_agent_heuristic_retriever(
-    repository_local_path="keras_docs",
-):
+def test_keras_docs_agent_heuristic_retriever(keras3_docs):
     load_dotenv()
     weave.init(project_name="ml-colabs/ml-frameworks-bot")
     api_reference_retriever = KerasDocumentationHeuristicRetreiver(
-        repository_local_path=repository_local_path
+        repository_local_path=keras3_docs
     )
     keras_docs_agent = KerasDocumentationAgent(
         op_extraction_llm_client=LLMClientWrapper(
@@ -64,9 +60,7 @@ def test_keras_docs_agent_heuristic_retriever(
     )
     evaluation = weave.Evaluation(
         dataset=weave.ref("keras_evaluation_dataset:v0").get(),
-        scorers=[
-            KerasDocumentationAgentJudge(repository_local_path=repository_local_path)
-        ],
+        scorers=[KerasDocumentationAgentJudge(repository_local_path=keras3_docs)],
     )
     summary = asyncio.run(evaluation.evaluate(keras_docs_agent))
     assert (
