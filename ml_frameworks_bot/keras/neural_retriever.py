@@ -17,8 +17,6 @@ from rich.progress import track
 import wandb
 
 from ..utils import (
-    build_keras_io_sources,
-    fetch_git_repository,
     get_all_file_paths,
     make_embedding_model,
 )
@@ -88,18 +86,6 @@ class KerasDocumentationRetreiver(weave.Model):
         exclude_file_postfixes: List[str] = ["index.md"],
         return_nodes: bool = True,
     ) -> List[Union[BaseNode, Document]]:
-        repository_owner = self.repository.split("/")[-2]
-        repository_name = self.repository.split("/")[-1]
-        personal_access_token = os.getenv("PERSONAL_ACCESS_TOKEN")
-        fetch_git_repository(
-            self.repository_local_path,
-            repository_owner,
-            repository_name,
-            personal_access_token,
-        )
-        source_directory = os.path.join(self.repository_local_path, "sources")
-        if not os.path.exists(source_directory):
-            build_keras_io_sources(repository_local_path=self.repository_local_path)
         input_files = []
         for directory in included_directories:
             input_files += get_all_file_paths(
@@ -198,8 +184,8 @@ class KerasDocumentationRetreiver(weave.Model):
                 else document_nodes
             )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
-            assert len(document_nodes) == len(
-                self._vector_index.docstore.docs
+            assert (
+                len(document_nodes) == len(self._vector_index.docstore.docs)
             ), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(
