@@ -5,10 +5,8 @@ from ml_frameworks_bot.keras import KerasDocumentationHeuristicRetreiver
 load_dotenv()
 
 
-def test_keras_retriever():
-    retriever = KerasDocumentationHeuristicRetreiver(
-        repository_local_path="artifacts/keras_docs"
-    )
+def test_keras_retriever(keras3_docs):
+    retriever = KerasDocumentationHeuristicRetreiver(repository_local_path=keras3_docs)
     retrieved_nodes = retriever.predict(query="keras.layers.Dense")
 
     assert (

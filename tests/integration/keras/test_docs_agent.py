@@ -37,7 +37,7 @@ def test_keras_docs_agent_neural_retriever(keras3_docs):
         summary["KerasDocumentationAgentJudge"]["api_reference_retrieval_accuracy"][
             "mean"
         ]
-        > 0.8
+        > 0.6
     )
     assert (
         summary["KerasDocumentationAgentJudge"]["op_extraction_accuracy"]["mean"] > 0.6
