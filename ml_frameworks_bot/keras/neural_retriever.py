@@ -86,6 +86,11 @@ class KerasDocumentationRetreiver(weave.Model):
         exclude_file_postfixes: List[str] = ["index.md"],
         return_nodes: bool = True,
     ) -> List[Union[BaseNode, Document]]:
+        if self.repository_local_path is None:
+            api = wandb.Api()
+            artifact = api.artifact("ml-colabs/ml-frameworks-bot/keras3-docs:latest")
+            artifact_dir = artifact.download()
+            self.repository_local_path = artifact_dir
         input_files = []
         for directory in included_directories:
             input_files += get_all_file_paths(
@@ -184,8 +189,8 @@ class KerasDocumentationRetreiver(weave.Model):
                 else document_nodes
             )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
-            assert len(document_nodes) == len(
-                self._vector_index.docstore.docs
+            assert (
+                len(document_nodes) == len(self._vector_index.docstore.docs)
             ), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(

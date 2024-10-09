@@ -4,6 +4,8 @@ from typing import Optional
 import weave
 from llama_index.core.schema import BaseNode, TextNode
 
+import wandb
+
 from .mapping import APIToDocMapping
 
 
@@ -19,6 +21,11 @@ class KerasDocumentationHeuristicRetreiver(weave.Model):
             repository_local_path=repository_local_path,
         )
         self.repository_local_path = repository_local_path
+        if self.repository_local_path is None:
+            api = wandb.Api()
+            artifact = api.artifact("ml-colabs/ml-frameworks-bot/keras3-docs:latest")
+            artifact_dir = artifact.download()
+            self.repository_local_path = artifact_dir
 
     def load_doc(self, keras_op: str) -> BaseNode:
         # TODO: Gracefully handle KeyError
