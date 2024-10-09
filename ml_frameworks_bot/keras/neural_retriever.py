@@ -17,8 +17,6 @@ from rich.progress import track
 import wandb
 
 from ..utils import (
-    build_keras_io_sources,
-    fetch_git_repository,
     get_all_file_paths,
     make_embedding_model,
 )
@@ -88,18 +86,11 @@ class KerasDocumentationRetreiver(weave.Model):
         exclude_file_postfixes: List[str] = ["index.md"],
         return_nodes: bool = True,
     ) -> List[Union[BaseNode, Document]]:
-        repository_owner = self.repository.split("/")[-2]
-        repository_name = self.repository.split("/")[-1]
-        personal_access_token = os.getenv("PERSONAL_ACCESS_TOKEN")
-        fetch_git_repository(
-            self.repository_local_path,
-            repository_owner,
-            repository_name,
-            personal_access_token,
-        )
-        source_directory = os.path.join(self.repository_local_path, "sources")
-        if not os.path.exists(source_directory):
-            build_keras_io_sources(repository_local_path=self.repository_local_path)
+        if self.repository_local_path is None:
+            api = wandb.Api()
+            artifact = api.artifact("ml-colabs/ml-frameworks-bot/keras3-docs:latest")
+            artifact_dir = artifact.download()
+            self.repository_local_path = artifact_dir
         input_files = []
         for directory in included_directories:
             input_files += get_all_file_paths(
@@ -117,9 +108,23 @@ class KerasDocumentationRetreiver(weave.Model):
                 with open(file_path, "r") as file:
                     text = file.read()
                 document_nodes.append(
-                    TextNode(text=text, metadata={"file_path": file_path})
+                    TextNode(
+                        text=text,
+                        metadata={
+                            "file_path": file_path.replace(
+                                self.repository_local_path + "/", ""
+                            )
+                        },
+                    )
                     if return_nodes
-                    else Document(text=text, metadata={"file_path": file_path})
+                    else Document(
+                        text=text,
+                        metadata={
+                            "file_path": file_path.replace(
+                                self.repository_local_path + "/", ""
+                            )
+                        },
+                    )
                 )
         return document_nodes
 
@@ -219,7 +224,7 @@ class KerasDocumentationRetreiver(weave.Model):
     def predict(self, query: str) -> List[NodeWithScore]:
         if self._retreival_engine is None:
             self._retreival_engine = self._vector_index.as_retriever(
-                similarity_top_k=self.similarity_top_k
+                similarity_top_k=self.similarity_top_k,
             )
         retreived_nodes = self._retreival_engine.retrieve(query)
         return retreived_nodes

@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import weave
 from llama_index.core.schema import BaseNode
@@ -7,7 +7,12 @@ from rich.progress import track
 
 from ..llm_wrapper import LLMClientWrapper
 from ..schema import KerasOperations
-from .retriever import KerasDocumentationRetreiver
+from .heuristic_retriever import KerasDocumentationHeuristicRetreiver
+from .neural_retriever import KerasDocumentationRetreiver
+
+DocumentationRetreiver = Union[
+    KerasDocumentationRetreiver, KerasDocumentationHeuristicRetreiver
+]
 
 
 class KerasOpWithAPIReference(BaseModel):
@@ -19,21 +24,21 @@ class KerasOpWithAPIReference(BaseModel):
 class KerasDocumentationAgent(weave.Model):
     op_extraction_llm_client: LLMClientWrapper
     retrieval_augmentation_llm_client: LLMClientWrapper
-    api_reference_retriever: KerasDocumentationRetreiver
-    use_rich_progressbar: bool
+    api_reference_retriever: DocumentationRetreiver
+    use_rich: bool
 
     def __init__(
         self,
         op_extraction_llm_client: LLMClientWrapper,
         retrieval_augmentation_llm_client: LLMClientWrapper,
-        api_reference_retriever: KerasDocumentationRetreiver,
-        use_rich_progressbar: bool = True,
+        api_reference_retriever: DocumentationRetreiver,
+        use_rich: bool = True,
     ):
         super().__init__(
             op_extraction_llm_client=op_extraction_llm_client,
             retrieval_augmentation_llm_client=retrieval_augmentation_llm_client,
             api_reference_retriever=api_reference_retriever,
-            use_rich_progressbar=use_rich_progressbar,
+            use_rich=use_rich,
         )
 
     @weave.op()
@@ -92,19 +97,31 @@ Here are some rules:
         iterable = keras_ops.operations
         iterable = (
             track(iterable, description="Retrieving api references:")
-            if self.use_rich_progressbar
+            if self.use_rich
             else iterable
         )
         for keras_op in iterable:
-            purpose_of_op = self.ask_llm_about_op(keras_op)
-            api_reference: BaseNode = self.api_reference_retriever.predict(
-                query=f"API reference for `{keras_op}`.\n{purpose_of_op}"
-            )[0]
+            is_neural_retriever = isinstance(
+                self.api_reference_retriever, KerasDocumentationRetreiver
+            )
+            if is_neural_retriever:
+                purpose_of_op = self.ask_llm_about_op(keras_op)
+                api_reference: BaseNode = self.api_reference_retriever.predict(
+                    query=f"API reference for `{keras_op}`.\n{purpose_of_op}",
+                )[0]
+            else:
+                api_reference: BaseNode = self.api_reference_retriever.predict(
+                    query=keras_op
+                )
             ops_with_api_reference.append(
                 KerasOpWithAPIReference(
                     keras_op=keras_op,
                     api_reference=api_reference.text,
-                    api_reference_path=api_reference.node.metadata["file_path"],
+                    api_reference_path=(
+                        api_reference.node.metadata["file_path"]
+                        if is_neural_retriever
+                        else api_reference.metadata["file_path"]
+                    ),
                 )
             )
         return ops_with_api_reference

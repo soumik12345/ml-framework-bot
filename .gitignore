@@ -166,3 +166,4 @@ wandb/
 vector_indices/
 artifacts/
 jax_docs/
+.ruff_cache/

@@ -24,12 +24,10 @@ class KerasDocumentationAgentJudge(weave.Scorer):
                 num_correct_ops_extracted += 1
                 base_retrieved_api_reference_path = keras_api_reference_path[
                     keras_ops.index(retrieved_keras_op_node.keras_op)
-                ].replace("sources/", "")
+                ]
                 if (
                     base_retrieved_api_reference_path
-                    == retrieved_keras_op_node.api_reference_path.replace(
-                        f"{self.repository_local_path}/sources/", ""
-                    )
+                    == retrieved_keras_op_node.api_reference_path
                 ):
                     num_api_reference_correct += 1
         return {
