@@ -29,7 +29,7 @@ def test_keras_docs_agent_neural_retriever(keras3_docs):
         use_rich=False,
     )
     evaluation = weave.Evaluation(
-        dataset=weave.ref("keras_evaluation_dataset:v0").get(),
+        dataset=weave.ref("keras_evaluation_dataset:v1").get(),
         scorers=[KerasDocumentationAgentJudge(repository_local_path=keras3_docs)],
     )
     summary = asyncio.run(evaluation.evaluate(keras_docs_agent))
@@ -59,7 +59,7 @@ def test_keras_docs_agent_heuristic_retriever(keras3_docs):
         use_rich=False,
     )
     evaluation = weave.Evaluation(
-        dataset=weave.ref("keras_evaluation_dataset:v0").get(),
+        dataset=weave.ref("keras_evaluation_dataset:v1").get(),
         scorers=[KerasDocumentationAgentJudge(repository_local_path=keras3_docs)],
     )
     summary = asyncio.run(evaluation.evaluate(keras_docs_agent))
@@ -67,7 +67,7 @@ def test_keras_docs_agent_heuristic_retriever(keras3_docs):
         summary["KerasDocumentationAgentJudge"]["api_reference_retrieval_accuracy"][
             "mean"
         ]
-        > 0.8
+        == 1.0
     )
     assert (
         summary["KerasDocumentationAgentJudge"]["op_extraction_accuracy"]["mean"] > 0.8
