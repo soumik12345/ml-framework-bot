@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 import weave
@@ -84,8 +84,16 @@ class KerasDocumentationRetreiver(weave.Model):
         self,
         included_directories: List[str] = ["examples", "guides", "templates"],
         exclude_file_postfixes: List[str] = ["index.md"],
+        chunk_on_separator: List[Tuple[str, str]] = [["ops", "----"]],
         return_nodes: bool = True,
     ) -> List[Union[BaseNode, Document]]:
+        """
+        Args:
+            chunk_on_separator (List[List[str]]): Each item is a 2-Tuple, consisting of the
+                common substring and the separator string. Each file path containing the common
+                substring will be split on the separator string and each chunk will be treated
+                as a separate TextNode.
+        """
         if self.repository_local_path is None:
             api = wandb.Api()
             artifact = api.artifact("ml-colabs/ml-frameworks-bot/keras3-docs:latest")
@@ -107,25 +115,33 @@ class KerasDocumentationRetreiver(weave.Model):
             if not exclude_file:
                 with open(file_path, "r") as file:
                     text = file.read()
-                document_nodes.append(
-                    TextNode(
-                        text=text,
-                        metadata={
-                            "file_path": file_path.replace(
-                                self.repository_local_path + "/", ""
-                            )
-                        },
+
+                if chunk_on_separator:
+                    for pattern in chunk_on_separator:
+                        if file_path.contains(pattern[0]):
+                            texts = text.split(pattern[1])
+                            nodes = [TextNode(text=text) for text in texts]
+                            document_nodes.append(nodes)
+                else:
+                    document_nodes.append(
+                        TextNode(
+                            text=text,
+                            metadata={
+                                "file_path": file_path.replace(
+                                    self.repository_local_path + "/", ""
+                                )
+                            },
+                        )
+                        if return_nodes
+                        else Document(
+                            text=text,
+                            metadata={
+                                "file_path": file_path.replace(
+                                    self.repository_local_path + "/", ""
+                                )
+                            },
+                        )
                     )
-                    if return_nodes
-                    else Document(
-                        text=text,
-                        metadata={
-                            "file_path": file_path.replace(
-                                self.repository_local_path + "/", ""
-                            )
-                        },
-                    )
-                )
         return document_nodes
 
     def chunk_documents(
