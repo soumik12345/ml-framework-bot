@@ -15,9 +15,6 @@ dependencies = [
     "weave>=0.51.5",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest>=8.3.3"]
-
 [tool.ruff.lint]
 select = ["E", "F", "I001", "W"]
 
@@ -28,3 +25,8 @@ lines-after-imports = 2
 pythonpath = "."
 testpaths = ["tests"]
 filterwarnings = "ignore::DeprecationWarning"
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.6.9", "pytest>=8.3.3"
+]
