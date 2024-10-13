@@ -10,6 +10,7 @@ from ..schema import KerasOperations
 from .heuristic_retriever import KerasDocumentationHeuristicRetreiver
 from .neural_retriever import KerasDocumentationRetreiver
 
+
 DocumentationRetreiver = Union[
     KerasDocumentationRetreiver, KerasDocumentationHeuristicRetreiver
 ]
@@ -84,7 +85,7 @@ Here are some rules:
             messages=[
                 {
                     "role": "user",
-                    "content": f"Describe the purpose of `{keras_op}` in less than 100 words",
+                    "content": f"Describe the purpose of `{keras_op}` in less than 100 words",  # noqa: E501
                 }
             ],
         )

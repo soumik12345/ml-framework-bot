@@ -1,4 +1,6 @@
+# ruff: noqa
 from typing import Dict
+
 
 APIToDocMapping: Dict[str, str] = {
     "keras.applications.ConvNeXtTiny": "sources/api/applications/convnext.md",
