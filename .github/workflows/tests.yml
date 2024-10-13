@@ -1,37 +1,42 @@
-name: Tests
+name: "Lint and Tests"
+
 on:
   pull_request:
     paths:
       - .github/workflows/tests.yml
       - ml_frameworks_bot/**
-      - requirements.txt
-      - setup.py
 
 jobs:
-  code-format:
-    name: check code format using black
+  lint-and-test:
+    name: "Lint using ruff and run test suite"
+
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: psf/black@stable
-  lint:
-    name: Check linting using ruff
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: chartboost/ruff-action@v1
-  unit-tests:
-    name: Unit tests
-    runs-on: ubuntu-latest
+
     env:
       WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
       PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
     steps:
-      - uses: actions/checkout@v3
-      - run: |
-          pip install -U pip pytest
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install .
-          pytest -s .
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python 3.10
+        run: uv python install 3.10
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: ruff format
+        run: |
+          uv run ruff check ml-frameworks-bot
+
+      - name: Test with PyTest
+        run: |
+          uv run pytest -v .
