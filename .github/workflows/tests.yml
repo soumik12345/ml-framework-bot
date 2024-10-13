@@ -35,7 +35,7 @@ jobs:
 
       - name: ruff format
         run: |
-          uv run ruff check ml-frameworks-bot
+          uv run ruff check ml_frameworks_bot
 
       - name: Test with PyTest
         run: |

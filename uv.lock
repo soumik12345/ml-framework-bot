@@ -1102,13 +1102,9 @@ dependencies = [
     { name = "weave" },
 ]
 
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-]
-
 [package.dev-dependencies]
 dev = [
+    { name = "pytest" },
     { name = "ruff" },
 ]
 
@@ -1120,13 +1116,15 @@ requires-dist = [
     { name = "llama-index-embeddings-huggingface", specifier = ">=0.3.1" },
     { name = "llama-index-embeddings-openai", specifier = ">=0.2.4" },
     { name = "openai", specifier = ">=1.44.1" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.3" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "weave", specifier = ">=0.51.5" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.6.9" }]
+dev = [
+    { name = "pytest", specifier = ">=8.3.3" },
+    { name = "ruff", specifier = ">=0.6.9" },
+]
 
 [[package]]
 name = "mpmath"
