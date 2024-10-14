@@ -4,6 +4,7 @@ import anthropic
 import weave
 from instructor import Instructor
 
+
 if TYPE_CHECKING:
     from anthropic import Anthropic
     from instructor import Instructor

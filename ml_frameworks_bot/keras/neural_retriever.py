@@ -89,10 +89,10 @@ class KerasDocumentationRetreiver(weave.Model):
     ) -> List[Union[BaseNode, Document]]:
         """
         Args:
-            chunk_on_separator (List[List[str]]): Each item is a 2-Tuple, consisting of the
-                common substring and the separator string. Each file path containing the common
-                substring will be split on the separator string and each chunk will be treated
-                as a separate TextNode.
+            chunk_on_separator (List[List[str]]): Each item is a 2-Tuple, consisting of
+                the common substring and the separator string. Each file path containing
+                the common substring will be split on the separator string and each
+                chunk will be treated as a separate TextNode.
         """
         if self.repository_local_path is None:
             api = wandb.Api()
@@ -205,9 +205,9 @@ class KerasDocumentationRetreiver(weave.Model):
                 else document_nodes
             )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
-            assert len(document_nodes) == len(
-                self._vector_index.docstore.docs
-            ), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"
+            assert (
+                len(document_nodes) == len(self._vector_index.docstore.docs)
+            ), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"  # noqa: E501
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(
                     persist_dir=vector_index_persist_dir
@@ -221,7 +221,7 @@ class KerasDocumentationRetreiver(weave.Model):
                             "chunk_size": chunk_size,
                             "chunk_overlap": chunk_overlap,
                             "buffer_size": buffer_size,
-                            "breakpoint_percentile_threshold": breakpoint_percentile_threshold,
+                            "breakpoint_percentile_threshold": breakpoint_percentile_threshold,  # noqa: E501
                             "included_directories": included_directories,
                             "torch_dtype": self.torch_dtype,
                         },
