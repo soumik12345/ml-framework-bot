@@ -10,7 +10,6 @@ from ..schema import KerasOperations
 from .heuristic_retriever import KerasDocumentationHeuristicRetreiver
 from .neural_retriever import KerasDocumentationRetreiver
 
-
 DocumentationRetreiver = Union[
     KerasDocumentationRetreiver, KerasDocumentationHeuristicRetreiver
 ]

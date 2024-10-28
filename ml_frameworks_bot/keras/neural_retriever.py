@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
+import wandb
 import weave
 from llama_index.core import (
     Settings,
@@ -14,12 +15,7 @@ from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core.schema import BaseNode, Document, NodeWithScore, TextNode
 from rich.progress import track
 
-import wandb
-
-from ..utils import (
-    get_all_file_paths,
-    make_embedding_model,
-)
+from ..utils import get_all_file_paths, make_embedding_model
 
 
 class KerasDocumentationRetreiver(weave.Model):
@@ -205,8 +201,8 @@ class KerasDocumentationRetreiver(weave.Model):
                 else document_nodes
             )
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
-            assert (
-                len(document_nodes) == len(self._vector_index.docstore.docs)
+            assert len(document_nodes) == len(
+                self._vector_index.docstore.docs
             ), f"No. of document nodes {len(document_nodes)} != No. of nodes in VectorIndex {len(self._vector_index.docstore.docs)}"  # noqa: E501
             if vector_index_persist_dir:
                 self._vector_index.storage_context.persist(
