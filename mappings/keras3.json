@@ -141,7 +141,6 @@
     "keras.layers.GlobalMaxPooling1D": "sources/api/layers/pooling_layers/global_max_pooling1d.md",
     "keras.layers.GlobalMaxPooling2D": "sources/api/layers/pooling_layers/global_max_pooling2d.md",
     "keras.layers.GlobalMaxPooling3D": "sources/api/layers/pooling_layers/global_max_pooling3d.md",
-    # FIXME: Remove MaxPool1D, MaxPool2D, MaxPool3D
     "keras.layers.MaxPooling1D": "sources/api/layers/pooling_layers/max_pooling1d.md",
     "keras.layers.MaxPooling2D": "sources/api/layers/pooling_layers/max_pooling2d.md",
     "keras.layers.MaxPooling3D": "sources/api/layers/pooling_layers/max_pooling3d.md",
@@ -606,5 +605,5 @@
     "keras.ops.rfft": "sources/api/ops/fft/index.md",
     "keras.ops.stft": "sources/api/ops/fft/index.md",
     "keras.ops.irfft": "sources/api/ops/fft/index.md",
-    "keras.ops.istft": "sources/api/ops/fft/index.md",
+    "keras.ops.istft": "sources/api/ops/fft/index.md"
 }
