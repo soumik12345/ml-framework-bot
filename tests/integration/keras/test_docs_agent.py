@@ -11,6 +11,7 @@ from ml_frameworks_bot.keras import (
 from ml_frameworks_bot.keras.metrics import KerasDocumentationAgentJudge
 from ml_frameworks_bot.llm_wrapper import LLMClientWrapper
 
+
 load_dotenv()
 
 
@@ -48,7 +49,8 @@ def test_keras_docs_agent_heuristic_retriever(keras3_docs):
     load_dotenv()
     weave.init(project_name="ml-colabs/ml-frameworks-bot")
     api_reference_retriever = KerasDocumentationHeuristicRetreiver(
-        repository_local_path=keras3_docs
+        repository_local_path=keras3_docs,
+        api_to_doc_mapping_file="mappings/keras3.json",
     )
     keras_docs_agent = KerasDocumentationAgent(
         op_extraction_llm_client=LLMClientWrapper(
