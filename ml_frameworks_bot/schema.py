@@ -34,5 +34,5 @@ class APIReferences(BaseModel):
     api_references: List[APIReference]
 
 
-class KerasOperations(BaseModel):
+class Operations(BaseModel):
     operations: List[str]
