@@ -20,19 +20,19 @@ import torch
 from dotenv import load_dotenv
 
 import wandb
-from ml_frameworks_bot.keras import KerasDocumentationRetreiver
+from ml_frameworks_bot.retrieval import NeuralRetreiver
 
 load_dotenv()
 wandb.init(
     project="ml-frameworks-bot", entity="ml-colabs", job_type="build_vector_index"
 )
-retriever = KerasDocumentationRetreiver(
+retriever = NeuralRetreiver(
+    framework="keras3",
     embedding_model_name="BAAI/bge-small-en-v1.5",
     torch_dtype=torch.float16,
     repository_local_path="keras_docs",
 )
 vector_index = retriever.index_documents(
-    included_directories=["sources/api"],
     vector_index_persist_dir="vector_indices/keras3_api_reference",
     artifact_name="keras3_api_reference",
 )
@@ -46,11 +46,12 @@ vector_index = retriever.index_documents(
 import weave
 from dotenv import load_dotenv
 
-from ml_frameworks_bot.keras import KerasDocumentationRetreiver
+from ml_frameworks_bot.retrieval import NeuralRetreiver
+
 
 load_dotenv()
 weave.init(project_name="ml-colabs/ml-frameworks-bot")
-retriever = KerasDocumentationRetreiver.from_wandb_artifact(
+retriever = NeuralRetreiver.from_wandb_artifact(
     artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
 )
 retrieved_nodes = retriever.predict(
@@ -66,17 +67,24 @@ retrieved_nodes = retriever.predict(
 import weave
 from dotenv import load_dotenv
 
-from ml_frameworks_bot.keras import KerasDocumentationRetreiver, KerasDocumentationAgent
+from ml_frameworks_bot.llm_wrapper import LLMClientWrapper
+from ml_frameworks_bot.retrieval import HeuristicRetreiver
 
 load_dotenv()
 weave.init(project_name="ml-colabs/ml-frameworks-bot")
-api_reference_retriever = KerasDocumentationRetreiver.from_wandb_artifact(
-    artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
+api_reference_retriever = HeuristicRetreiver(
+    framework="keras3",
+    repository_local_path="keras_docs",
 )
-keras_docs_agent = KerasDocumentationAgent(
-    llm_name="gpt-4o", api_reference_retriever=api_reference_retriever
+docs_agent = TranslationAgent(
+    op_extraction_llm_client=LLMClientWrapper(
+        model_name="claude-3-5-sonnet-20240620"
+    ),
+    retrieval_augmentation_llm_client=LLMClientWrapper(model_name="gpt-4o"),
+    api_reference_retriever=api_reference_retriever,
+    use_rich=False,
 )
-reponse = keras_docs_agent.predict(
+reponse = docs_agent.predict(
     code_snippet="""
 import keras
 from keras import layers
