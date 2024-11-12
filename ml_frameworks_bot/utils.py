@@ -1,11 +1,12 @@
 import os
 from typing import Any, Callable, Dict, List, Optional
 
-import wandb
 import weave
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
+
+import wandb
 
 
 def get_all_file_paths(
@@ -70,3 +71,19 @@ def get_wandb_artifact(
     if get_metadata:
         return artifact_dir, artifact.metadata
     return artifact_dir
+
+
+def upload_file_as_artifact(
+    path: str,
+    artifact_name: str,
+    artifact_metadata: Optional[Dict[str, Any]] = {},
+    artifact_aliases: Optional[List[str]] = [],
+) -> None:
+    if wandb.run and artifact_name:
+        artifact = wandb.Artifact(
+            name=artifact_name,
+            type="vector_index",
+            metadata=artifact_metadata,
+        )
+        artifact.add_dir(local_path=path)
+        wandb.log_artifact(artifact, aliases=artifact_aliases)
