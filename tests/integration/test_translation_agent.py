@@ -12,13 +12,13 @@ from ml_frameworks_bot.translation_agent import TranslationAgent
 load_dotenv()
 
 
-def test_keras_docs_agent_neural_retriever(keras3_docs):
+def test_agent_neural_retriever(keras3_docs):
     load_dotenv()
     weave.init(project_name="ml-colabs/ml-frameworks-bot")
     api_reference_retriever = NeuralRetreiver.from_wandb_artifact(
         artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
     )
-    keras_docs_agent = TranslationAgent(
+    agent = TranslationAgent(
         op_extraction_llm_client=LLMClientWrapper(
             model_name="claude-3-5-sonnet-20240620"
         ),
@@ -30,7 +30,7 @@ def test_keras_docs_agent_neural_retriever(keras3_docs):
         dataset=weave.ref("keras_evaluation_dataset:v2").get(),
         scorers=[DocumentationAgentJudge(repository_local_path=keras3_docs)],
     )
-    summary = asyncio.run(evaluation.evaluate(keras_docs_agent))
+    summary = asyncio.run(evaluation.evaluate(agent))
     assert (
         summary["DocumentationAgentJudge"]["api_reference_retrieval_accuracy"]["mean"]
         > 0.6
@@ -38,14 +38,14 @@ def test_keras_docs_agent_neural_retriever(keras3_docs):
     assert summary["DocumentationAgentJudge"]["op_extraction_accuracy"]["mean"] > 0.6
 
 
-def test_keras_docs_agent_heuristic_retriever(keras3_docs):
+def test_agent_heuristic_retriever(keras3_docs):
     load_dotenv()
     weave.init(project_name="ml-colabs/ml-frameworks-bot")
     api_reference_retriever = HeuristicRetreiver(
         framework="keras3",
         repository_local_path=keras3_docs,
     )
-    keras_docs_agent = TranslationAgent(
+    agent = TranslationAgent(
         op_extraction_llm_client=LLMClientWrapper(
             model_name="claude-3-5-sonnet-20240620"
         ),
@@ -57,7 +57,7 @@ def test_keras_docs_agent_heuristic_retriever(keras3_docs):
         dataset=weave.ref("keras_evaluation_dataset:v2").get(),
         scorers=[DocumentationAgentJudge(repository_local_path=keras3_docs)],
     )
-    summary = asyncio.run(evaluation.evaluate(keras_docs_agent))
+    summary = asyncio.run(evaluation.evaluate(agent))
     assert (
         summary["DocumentationAgentJudge"]["api_reference_retrieval_accuracy"]["mean"]
         == 1.0
