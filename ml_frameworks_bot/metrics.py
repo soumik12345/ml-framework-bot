@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 
 import weave
 
-from .translation_agent import OpWithAPIReference
+from .op_extraction import OpWithAPIReference
 
 
 class DocumentationAgentJudge(weave.Scorer):

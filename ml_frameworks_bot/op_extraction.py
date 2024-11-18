@@ -19,7 +19,7 @@ class OpWithAPIReference(BaseModel):
     api_reference_path: str
 
 
-class TranslationAgent(weave.Model):
+class OpExtractor(weave.Model):
     op_extraction_llm_client: LLMClientWrapper
     retrieval_augmentation_llm_client: LLMClientWrapper
     api_reference_retriever: DocumentationRetreiver

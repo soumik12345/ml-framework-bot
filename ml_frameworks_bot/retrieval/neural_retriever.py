@@ -147,16 +147,10 @@ class NeuralRetreiver(weave.Model):
         vector_index_persist_dir: Optional[str] = None,
         artifact_name: Optional[str] = None,
         artifact_aliases: Optional[List[str]] = [],
-        track_load_documents: bool = False,
     ) -> VectorStoreIndex:
         if self.repository_local_path is not None:
             # Load documents as nodes
-            load_document_fn = (
-                weave.op()(self.load_documents)
-                if track_load_documents
-                else self.load_documents
-            )
-            document_nodes = load_document_fn(return_nodes=return_nodes)
+            document_nodes = self.load_documents(return_nodes=return_nodes)
 
             # Index documents
             self._vector_index = VectorStoreIndex(nodes=document_nodes)
