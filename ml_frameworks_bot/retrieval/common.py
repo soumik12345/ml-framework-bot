@@ -36,5 +36,11 @@ FrameworkParams: Dict[str, Dict[str, Any]] = {
         "split_pattern": [("ops", "----")],
         "included_directories": ["sources/api"],
         "exclude_file_postfixes": ["index.md"],
-    }
+        "included_file_extensions": [".md"],
+    },
+    "mlx": {
+        "chunk_on_separator": False,
+        "included_directories": ["dev", "examples", "python", "usage"],
+        "included_file_extensions": [".txt"],
+    },
 }
