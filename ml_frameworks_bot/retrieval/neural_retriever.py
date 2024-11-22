@@ -100,8 +100,10 @@ class NeuralRetreiver(weave.Model):
         input_files = []
         for directory in FrameworkParams[self.framework]["included_directories"]:
             input_files += get_all_file_paths(
-                os.path.join(self.repository_local_path, directory),
-                included_file_extensions=[".md"],
+                directory=os.path.join(self.repository_local_path, directory),
+                included_file_extensions=FrameworkParams[self.framework][
+                    "included_file_extensions"
+                ],
             )
 
         # Create nodes
@@ -109,10 +111,13 @@ class NeuralRetreiver(weave.Model):
         for file_path in track(input_files, description="Loading documents:"):
             # Exclude files with certain postfixes
             exclude_file = False
-            for exclusion in FrameworkParams[self.framework]["exclude_file_postfixes"]:
-                if file_path.endswith(exclusion):
-                    exclude_file = True
-                    break
+            if "exclude_file_postfixes" in FrameworkParams[self.framework]:
+                for exclusion in FrameworkParams[self.framework][
+                    "exclude_file_postfixes"
+                ]:
+                    if file_path.endswith(exclusion):
+                        exclude_file = True
+                        break
 
             if not exclude_file:
                 with open(file_path, "r") as file:
@@ -172,13 +177,11 @@ class NeuralRetreiver(weave.Model):
                     artifact_metadata={
                         "framework": self.framework,
                         "embedding_model_name": self.embedding_model_name,
-                        "included_directories": FrameworkParams[self.framework][
-                            "included_directories"
-                        ],
-                        "exclude_file_postfixes": FrameworkParams[self.framework][
-                            "exclude_file_postfixes"
-                        ],
                         "torch_dtype": self.torch_dtype,
+                        **{
+                            key: FrameworkParams[self.framework][key]
+                            for key in FrameworkParams[self.framework]
+                        },
                     },
                     artifact_aliases=artifact_aliases,
                 )
