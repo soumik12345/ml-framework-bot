@@ -39,6 +39,7 @@ class OpExtractor(weave.Model):
             use_rich=use_rich,
         )
 
+    # ruff: noqa: E501
     @weave.op()
     def extract_operations(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
@@ -50,20 +51,20 @@ class OpExtractor(weave.Model):
             messages=[
                 {
                     "role": "system",
-                    "content": """
-You are an experienced machine learning engineer expert in python and Keras.
-You are suppossed to think step-by-step about all the unique Keras operations,
-layers, and functions from a given snippet of code.
+                    "content": f"""
+                        You are an experienced machine learning engineer expert in python and {self.api_reference_retriever.framework}.
+                        You are suppossed to think step-by-step about all the unique {self.api_reference_retriever.framework} operations,
+                        layers, and functions from a given snippet of code.
 
-Here are some rules:
-1. All functions and classes that are imported from `keras` should be considered to
-    be Keras operations.
-2. `import` statements don't count as separate statements.
-3. If there are nested Keras operations, you should extract all the operations that
-    are present inside the parent operation.
-4. You should simply return the names of the ops and not the entire statement itself.
-5. Ensure that the names of the ops consist of the entire `keras` namespace.
-""",
+                        Here are some rules:
+                        1. All functions and classes that are imported from `{self.api_reference_retriever.framework}` should be considered to
+                            be {self.api_reference_retriever.framework} operations.
+                        2. `import` statements don't count as separate statements.
+                        3. If there are nested {self.api_reference_retriever.framework} operations, you should extract all the operations that
+                            are present inside the parent operation.
+                        4. You should simply return the names of the ops and not the entire statement itself.
+                        5. Ensure that the names of the ops consist of the entire `{self.api_reference_retriever.framework}` namespace.
+                    """,
                 },
                 {
                     "role": "user",
