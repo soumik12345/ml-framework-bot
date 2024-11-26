@@ -1,11 +1,11 @@
 import json
 import os
-from typing import Optional
+from typing import Optional, get_args
 
 import weave
 from llama_index.core.schema import BaseNode, TextNode
 
-from ..utils import get_wandb_artifact
+from ..utils import SUPPORTED_FRAMEWORKS, get_wandb_artifact
 from .common import RepositoryMapping
 
 
@@ -18,6 +18,11 @@ class HeuristicRetreiver(weave.Model):
         framework: str,
         repository_local_path: Optional[str] = None,
     ):
+        assert framework in get_args(
+            SUPPORTED_FRAMEWORKS
+        ), f"""{framework} not supported
+        Supported frameworks are {", ".join(get_args(SUPPORTED_FRAMEWORKS))}"""
+
         super().__init__(
             framework=framework,
             repository_local_path=repository_local_path,
