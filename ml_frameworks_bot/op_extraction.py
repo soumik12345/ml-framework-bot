@@ -43,10 +43,10 @@ class OpExtractor(weave.Model):
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
     ) -> Operations:
         completion = litellm.completion(
-                model=self.model_name,
-                response_format=Operations,
-                seed=seed,
-                messages=[
+            model=self.model_name,
+            response_format=Operations,
+            seed=seed,
+            messages=[
                 {
                     "role": "system",
                     "content": f"""
