@@ -12,35 +12,6 @@ class SupportedFrameworks(BaseModel):
     frameworks: SUPPORTED_FRAMEWORKS
 
 
-class TranslationAgent(weave.Model):
-    model_name: str
-    verbose: bool = True
-
-    @weave.op()
-    def predict(
-        self,
-        code_snippet: str,
-        # target_framework: str,
-    ):
-        # identify source framework
-        framework_identification_model = FrameworkIdentificationModel(model_name=self.model_name)
-        source_framework = framework_identification_model.predict(code_snippet=code_snippet)
-
-        # initialise retriever
-        source_retriever: DocumentationRetreiver = HeuristicRetreiver(
-            framework=source_framework,
-        )
-
-        # Op Extraction
-        source_op_extractor = OpExtractor(
-            model_name=self.model_name,
-            api_reference_retriever=source_retriever,
-            verbose=self.verbose,
-        )
-        source_ops = source_op_extractor.predict(code_snippet=code_snippet)  # noqa: F841
-        return source_ops
-
-
 class FrameworkIdentificationModel(weave.Model):
     model_name: str
 
@@ -75,3 +46,33 @@ from tensorflow, then the framework is keras3.
             completion,
             response_format=SupportedFrameworks,
         ).frameworks
+
+
+
+class TranslationAgent(weave.Model):
+    model_name: str
+    verbose: bool = True
+
+    @weave.op()
+    def predict(
+        self,
+        code_snippet: str,
+        # target_framework: str,
+    ):
+        # identify source framework
+        framework_identification_model = FrameworkIdentificationModel(model_name=self.model_name)
+        source_framework = framework_identification_model.predict(code_snippet=code_snippet)
+
+        # initialise retriever
+        source_retriever: DocumentationRetreiver = HeuristicRetreiver(
+            framework=source_framework,
+        )
+
+        # Op Extraction
+        source_op_extractor = OpExtractor(
+            model_name=self.model_name,
+            api_reference_retriever=source_retriever,
+            verbose=self.verbose,
+        )
+        source_ops = source_op_extractor.predict(code_snippet=code_snippet)  # noqa: F841
+        return source_ops
