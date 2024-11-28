@@ -1,18 +1,18 @@
+import json
 import os
 from typing import Any, Callable, Dict, List, Literal, Optional
 
-import json
 import weave
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
+from pydantic import BaseModel
 
 import wandb
 
 
-SUPPORTED_FRAMEWORKS = Literal[
-    "keras3", "keras2", "pytorch", "mlx", "flax", "jax", "numpy"
-]
+class SupportedFrameworks(BaseModel):
+    frameworks: Literal["keras3", "keras2", "pytorch", "mlx", "flax", "jax", "numpy"]
 
 
 def get_all_file_paths(
