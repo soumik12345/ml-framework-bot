@@ -1,13 +1,14 @@
 from typing import Dict, List, Optional, Union
 
+import litellm
 import weave
 from llama_index.core.schema import BaseNode
 from pydantic import BaseModel
 from rich.progress import track
 
-from .llm_wrapper import LLMClientWrapper
 from .retrieval import HeuristicRetreiver, NeuralRetreiver
 from .schema import Operations
+from .utils import get_structured_output_from_completion
 
 
 DocumentationRetreiver = Union[NeuralRetreiver, HeuristicRetreiver]
@@ -20,23 +21,20 @@ class OpWithAPIReference(BaseModel):
 
 
 class OpExtractor(weave.Model):
-    op_extraction_llm_client: LLMClientWrapper
-    retrieval_augmentation_llm_client: LLMClientWrapper
+    model_name: str
     api_reference_retriever: DocumentationRetreiver
-    use_rich: bool
+    verbose: bool
 
     def __init__(
         self,
-        op_extraction_llm_client: LLMClientWrapper,
-        retrieval_augmentation_llm_client: LLMClientWrapper,
+        model_name: str,
         api_reference_retriever: DocumentationRetreiver,
-        use_rich: bool = True,
+        verbose: bool = True,
     ):
         super().__init__(
-            op_extraction_llm_client=op_extraction_llm_client,
-            retrieval_augmentation_llm_client=retrieval_augmentation_llm_client,
+            model_name=model_name,
             api_reference_retriever=api_reference_retriever,
-            use_rich=use_rich,
+            verbose=verbose,
         )
 
     # ruff: noqa: E501
@@ -44,26 +42,26 @@ class OpExtractor(weave.Model):
     def extract_operations(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
     ) -> Operations:
-        operations: Operations = self.op_extraction_llm_client.predict(
-            max_retries=max_retries,
-            response_model=Operations,
-            seed=seed,
-            messages=[
+        completion = litellm.completion(
+                model=self.model_name,
+                response_format=Operations,
+                seed=seed,
+                messages=[
                 {
                     "role": "system",
                     "content": f"""
-                        You are an experienced machine learning engineer expert in python and {self.api_reference_retriever.framework}.
-                        You are suppossed to think step-by-step about all the unique {self.api_reference_retriever.framework} operations,
-                        layers, and functions from a given snippet of code.
+You are an experienced machine learning engineer expert in python and {self.api_reference_retriever.framework}.
+You are suppossed to think step-by-step about all the unique {self.api_reference_retriever.framework} operations,
+layers, and functions from a given snippet of code.
 
-                        Here are some rules:
-                        1. All functions and classes that are imported from `{self.api_reference_retriever.framework}` should be considered to
-                            be {self.api_reference_retriever.framework} operations.
-                        2. `import` statements don't count as separate statements.
-                        3. If there are nested {self.api_reference_retriever.framework} operations, you should extract all the operations that
-                            are present inside the parent operation.
-                        4. You should simply return the names of the ops and not the entire statement itself.
-                        5. Ensure that the names of the ops consist of the entire `{self.api_reference_retriever.framework}` namespace.
+Here are some rules:
+1. All functions and classes that are imported from `{self.api_reference_retriever.framework}` should be considered to
+    be {self.api_reference_retriever.framework} operations.
+2. `import` statements don't count as separate statements.
+3. If there are nested {self.api_reference_retriever.framework} operations, you should extract all the operations that
+    are present inside the parent operation.
+4. You should simply return the names of the ops and not the entire statement itself.
+5. Ensure that the names of the ops consist of the entire `{self.api_reference_retriever.framework}` namespace.
                     """,
                 },
                 {
@@ -72,12 +70,16 @@ class OpExtractor(weave.Model):
                 },
             ],
         )
+        operations = get_structured_output_from_completion(
+            completion=completion, response_format=Operations
+        )
         unique_ops = Operations(operations=list(set(operations.operations)))
         return unique_ops
 
     @weave.op()
     def ask_llm_about_op(self, op: str) -> str:
-        return self.retrieval_augmentation_llm_client.predict(
+        return litellm.completion(
+            model=self.model_name,
             messages=[
                 {
                     "role": "user",
@@ -92,7 +94,7 @@ class OpExtractor(weave.Model):
         iterable = ops.operations
         iterable = (
             track(iterable, description="Retrieving api references:")
-            if self.use_rich
+            if self.verbose
             else iterable
         )
         for op in iterable:

@@ -1,6 +1,7 @@
 import os
 from typing import Any, Callable, Dict, List, Literal, Optional
 
+import json
 import weave
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -92,3 +93,11 @@ def upload_file_as_artifact(
         )
         artifact.add_dir(local_path=path)
         wandb.log_artifact(artifact, aliases=artifact_aliases)
+
+
+def get_structured_output_from_completion(
+    completion: Any, response_format: type
+) -> Any:
+    return response_format.model_validate(
+        json.loads(completion.choices[0].message.content)
+    )

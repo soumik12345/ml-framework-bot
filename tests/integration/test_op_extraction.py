@@ -3,7 +3,6 @@ import asyncio
 import weave
 from dotenv import load_dotenv
 
-from ml_frameworks_bot.llm_wrapper import LLMClientWrapper
 from ml_frameworks_bot.metrics import DocumentationAgentJudge
 from ml_frameworks_bot.op_extraction import OpExtractor
 from ml_frameworks_bot.retrieval import HeuristicRetreiver, NeuralRetreiver
@@ -19,12 +18,9 @@ def test_op_extractor_neural_retriever(keras3_docs):
         artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
     )
     op_extractor = OpExtractor(
-        op_extraction_llm_client=LLMClientWrapper(
-            model_name="claude-3-5-sonnet-20240620"
-        ),
-        retrieval_augmentation_llm_client=LLMClientWrapper(model_name="gpt-4o"),
+        model_name="claude-3-5-sonnet-20240620",
         api_reference_retriever=api_reference_retriever,
-        use_rich=False,
+        verbose=False,
     )
     evaluation = weave.Evaluation(
         dataset=weave.ref("keras_evaluation_dataset:v2").get(),
@@ -46,12 +42,9 @@ def test_op_extractor_heuristic_retriever(keras3_docs):
         repository_local_path=keras3_docs,
     )
     op_extractor = OpExtractor(
-        op_extraction_llm_client=LLMClientWrapper(
-            model_name="claude-3-5-sonnet-20240620"
-        ),
-        retrieval_augmentation_llm_client=LLMClientWrapper(model_name="gpt-4o"),
+        model_name="claude-3-5-sonnet-20240620",
         api_reference_retriever=api_reference_retriever,
-        use_rich=False,
+        verbose=False,
     )
     evaluation = weave.Evaluation(
         dataset=weave.ref("keras_evaluation_dataset:v2").get(),

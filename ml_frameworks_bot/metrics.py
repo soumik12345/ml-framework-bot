@@ -11,11 +11,11 @@ class DocumentationAgentJudge(weave.Scorer):
     @weave.op()
     async def score(
         self,
-        model_output: Optional[Dict[str, List[OpWithAPIReference]]],
+        output: Optional[Dict[str, List[OpWithAPIReference]]],
         ops: List[str],
         api_reference_path: List[str],
     ) -> Dict[str, int | float]:
-        retrieved_ops_with_references = model_output["retrieved_ops_with_references"]
+        retrieved_ops_with_references = output["retrieved_ops_with_references"]
         num_correct_ops_extracted, num_api_reference_correct = 0, 0
         for retrieved_op_node in retrieved_ops_with_references:
             if retrieved_op_node.op in ops:

@@ -168,3 +168,4 @@ artifacts/
 jax_docs/
 .ruff_cache/
 generate.py
+uv.lock
