@@ -2,14 +2,10 @@ from typing import get_args
 
 import litellm
 import weave
-from pydantic import BaseModel
+
 from .op_extraction import DocumentationRetreiver, OpExtractor
 from .retrieval import HeuristicRetreiver
-from .utils import SUPPORTED_FRAMEWORKS, get_structured_output_from_completion
-
-
-class SupportedFrameworks(BaseModel):
-    frameworks: SUPPORTED_FRAMEWORKS
+from .utils import SupportedFrameworks, get_structured_output_from_completion
 
 
 class FrameworkIdentificationModel(weave.Model):
@@ -22,10 +18,10 @@ class FrameworkIdentificationModel(weave.Model):
             model=self.model_name,
             messages=[
                 {
-                "role": "system",
-                "content": f"""
+                    "role": "system",
+                    "content": f"""
 You are an experienced machine learning engineer expert in python,
-and the following frameworks: {", ".join(get_args(SUPPORTED_FRAMEWORKS))}.
+and the following frameworks: {", ".join(get_args(SupportedFrameworks.__annotations__["frameworks"]))}.
 You will be provided with a code snippet and you need to identify from the aforementioned
 frameworks the code snippet belongs to. You must follow the following rules:
 1. If keras is imported using `from tensorflow import keras`, then the framework is keras2.
@@ -48,7 +44,6 @@ from tensorflow, then the framework is keras3.
         ).frameworks
 
 
-
 class TranslationAgent(weave.Model):
     model_name: str
     verbose: bool = True
@@ -60,8 +55,12 @@ class TranslationAgent(weave.Model):
         # target_framework: str,
     ):
         # identify source framework
-        framework_identification_model = FrameworkIdentificationModel(model_name=self.model_name)
-        source_framework = framework_identification_model.predict(code_snippet=code_snippet)
+        framework_identification_model = FrameworkIdentificationModel(
+            model_name=self.model_name
+        )
+        source_framework = framework_identification_model.predict(
+            code_snippet=code_snippet
+        )
 
         # initialise retriever
         source_retriever: DocumentationRetreiver = HeuristicRetreiver(

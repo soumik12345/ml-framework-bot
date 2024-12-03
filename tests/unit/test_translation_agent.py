@@ -43,5 +43,5 @@ from ml_frameworks_bot.translation_agent import FrameworkIdentificationModel
 def test_framework_identification_model(
     code_snippet: str, source_framework: str
 ) -> None:
-    identification_agent = FrameworkIdentificationModel(model="gpt-4o-mini")
+    identification_agent = FrameworkIdentificationModel(model_name="gpt-4o-mini")
     assert identification_agent.predict(code_snippet=code_snippet) == source_framework

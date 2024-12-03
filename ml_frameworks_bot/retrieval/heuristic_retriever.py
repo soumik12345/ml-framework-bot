@@ -5,7 +5,7 @@ from typing import Optional, get_args
 import weave
 from llama_index.core.schema import BaseNode, TextNode
 
-from ..utils import SUPPORTED_FRAMEWORKS, get_wandb_artifact
+from ..utils import SupportedFrameworks, get_wandb_artifact
 from .common import RepositoryMapping
 
 
@@ -19,9 +19,9 @@ class HeuristicRetreiver(weave.Model):
         repository_local_path: Optional[str] = None,
     ):
         assert framework in get_args(
-            SUPPORTED_FRAMEWORKS
+            SupportedFrameworks.__annotations__["frameworks"]
         ), f"""{framework} not supported
-        Supported frameworks are {", ".join(get_args(SUPPORTED_FRAMEWORKS))}"""
+        Supported frameworks are {", ".join(get_args(SupportedFrameworks.__annotations__["frameworks"]))}"""  # noqa: E501
 
         super().__init__(
             framework=framework,

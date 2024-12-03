@@ -18,7 +18,7 @@ def test_op_extractor_neural_retriever(keras3_docs):
         artifact_address="ml-colabs/ml-frameworks-bot/keras3_api_reference:latest"
     )
     op_extractor = OpExtractor(
-        model_name="claude-3-5-sonnet-20240620",
+        model_name="claude-3-5-sonnet-20241022",
         api_reference_retriever=api_reference_retriever,
         verbose=False,
     )
@@ -42,7 +42,7 @@ def test_op_extractor_heuristic_retriever(keras3_docs):
         repository_local_path=keras3_docs,
     )
     op_extractor = OpExtractor(
-        model_name="claude-3-5-sonnet-20240620",
+        model_name="claude-3-5-sonnet-20241022",
         api_reference_retriever=api_reference_retriever,
         verbose=False,
     )
