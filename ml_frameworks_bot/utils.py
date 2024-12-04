@@ -2,10 +2,8 @@ import json
 import os
 from typing import Any, Callable, Dict, List, Literal, Optional
 
+import torch
 import weave
-from llama_index.core.base.embeddings.base import BaseEmbedding
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.embeddings.openai import OpenAIEmbedding
 from pydantic import BaseModel
 
 import wandb
@@ -34,25 +32,6 @@ def get_all_file_paths(
     return file_paths
 
 
-def make_embedding_model(
-    embedding_model_name: str, model_kwargs: Optional[Dict[str, Any]] = {}
-) -> BaseEmbedding:
-    return (
-        OpenAIEmbedding(model_name=embedding_model_name)
-        if embedding_model_name
-        in [
-            "text-embedding-3-small",
-            "text-embedding-3-large",
-            "text-embedding-ada-002",
-        ]
-        else HuggingFaceEmbedding(
-            model_name=embedding_model_name,
-            trust_remote_code=True,
-            model_kwargs=model_kwargs,
-        )
-    )
-
-
 def weave_op_wrapper(name: str) -> Callable[[Callable], Callable]:
     def wrapper(fn: Callable) -> Callable:
         op = weave.op()(fn)
@@ -79,7 +58,7 @@ def get_wandb_artifact(
     return artifact_dir
 
 
-def upload_file_as_artifact(
+def upload_as_artifact(
     path: str,
     artifact_name: str,
     artifact_metadata: Optional[Dict[str, Any]] = {},
@@ -91,7 +70,12 @@ def upload_file_as_artifact(
             type="vector_index",
             metadata=artifact_metadata,
         )
-        artifact.add_dir(local_path=path)
+        if os.path.isdir(path):
+            artifact.add_dir(local_path=path)
+        elif os.path.isfile(path):
+            artifact.add_file(local_path=path)
+        else:
+            raise ValueError(f"Path {path} is not a valid file or directory")
         wandb.log_artifact(artifact, aliases=artifact_aliases)
 
 
@@ -101,3 +85,14 @@ def get_structured_output_from_completion(
     return response_format.model_validate(
         json.loads(completion.choices[0].message.content)
     )
+
+
+def get_torch_backend():
+    if torch.cuda.is_available():
+        if torch.backends.cuda.is_built():
+            return "cuda"
+    if torch.backends.mps.is_available():
+        if torch.backends.mps.is_built():
+            return "mps"
+        return "cpu"
+    return "cpu"
