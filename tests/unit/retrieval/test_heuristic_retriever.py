@@ -20,7 +20,7 @@ load_dotenv()
     ],
     ids=["keras3", "mlx"],
 )
-def test_keras_retriever(
+def test_heuristic_retriever(
     framework, repository_local_path, query, expected_path, request
 ):
     retriever = HeuristicRetreiver(
@@ -29,4 +29,4 @@ def test_keras_retriever(
     )
     retrieved_nodes = retriever.predict(query=query)
 
-    assert retrieved_nodes.metadata["file_path"] == expected_path
+    assert retrieved_nodes["file_path"] == expected_path

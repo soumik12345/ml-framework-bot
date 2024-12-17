@@ -2,16 +2,17 @@ from typing import Dict, List, Optional, Union
 
 import litellm
 import weave
-from llama_index.core.schema import BaseNode
 from pydantic import BaseModel
 from rich.progress import track
 
-from .retrieval import HeuristicRetreiver, NeuralRetreiver
+from .prompts import OP_EXTRACTION_TMPL
+from .retrieval import CodeT5Retriever, HeuristicRetreiver
 from .schema import Operations
 from .utils import get_structured_output_from_completion
 
 
-DocumentationRetreiver = Union[NeuralRetreiver, HeuristicRetreiver]
+NeuralRetriever = Union[CodeT5Retriever]
+DocumentationRetreiver = Union[NeuralRetriever, HeuristicRetreiver]
 
 
 class OpWithAPIReference(BaseModel):
@@ -37,7 +38,6 @@ class OpExtractor(weave.Model):
             verbose=verbose,
         )
 
-    # ruff: noqa: E501
     @weave.op()
     def extract_operations(
         self, code_snippet: str, seed: Optional[int] = None, max_retries: int = 3
@@ -49,20 +49,12 @@ class OpExtractor(weave.Model):
             messages=[
                 {
                     "role": "system",
-                    "content": f"""
-You are an experienced machine learning engineer expert in python and {self.api_reference_retriever.framework}.
-You are suppossed to think step-by-step about all the unique {self.api_reference_retriever.framework} operations,
-layers, and functions from a given snippet of code.
-
-Here are some rules:
-1. All functions and classes that are imported from `{self.api_reference_retriever.framework}` should be considered to
-    be {self.api_reference_retriever.framework} operations.
-2. `import` statements don't count as separate statements.
-3. If there are nested {self.api_reference_retriever.framework} operations, you should extract all the operations that
-    are present inside the parent operation.
-4. You should simply return the names of the ops and not the entire statement itself.
-5. Ensure that the names of the ops consist of the entire `{self.api_reference_retriever.framework}` namespace.
-                    """,
+                    "content": OP_EXTRACTION_TMPL.format(
+                        framework="keras"
+                        if self.api_reference_retriever.framework
+                        in ["keras3", "keras2"]
+                        else self.api_reference_retriever.framework
+                    ),
                 },
                 {
                     "role": "user",
@@ -98,25 +90,18 @@ Here are some rules:
             else iterable
         )
         for op in iterable:
-            is_neural_retriever = isinstance(
-                self.api_reference_retriever, NeuralRetreiver
-            )
-            if is_neural_retriever:
+            if isinstance(self.api_reference_retriever, NeuralRetriever):
                 purpose_of_op = self.ask_llm_about_op(op)
-                api_reference: BaseNode = self.api_reference_retriever.predict(
+                api_reference = self.api_reference_retriever.predict(
                     query=f"API reference for `{op}`.\n{purpose_of_op}",
                 )[0]
             else:
-                api_reference: BaseNode = self.api_reference_retriever.predict(query=op)
+                api_reference = self.api_reference_retriever.predict(query=op)
             ops_with_api_reference.append(
                 OpWithAPIReference(
                     op=op,
-                    api_reference=api_reference.text,
-                    api_reference_path=(
-                        api_reference.node.metadata["file_path"]
-                        if is_neural_retriever
-                        else api_reference.metadata["file_path"]
-                    ),
+                    api_reference=api_reference["text"],
+                    api_reference_path=api_reference["file_path"],
                 )
             )
         return ops_with_api_reference

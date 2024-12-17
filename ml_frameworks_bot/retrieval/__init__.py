@@ -1,8 +1,8 @@
+from .codet5_retriever import CodeT5Retriever
 from .heuristic_retriever import HeuristicRetreiver
-from .neural_retriever import NeuralRetreiver
 
 
 __all__ = [
     "HeuristicRetreiver",
-    "NeuralRetreiver",
+    "CodeT5Retriever",
 ]
